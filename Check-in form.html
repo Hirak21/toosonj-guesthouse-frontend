@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guest Check-in - Toosonj Guest House</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .checkin-container { max-width: 800px; margin: 100px auto 50px; }
+        .checkin-form-container { background: white; padding: 3rem; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .booking-info { background: #f8f9fa; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; border-left: 4px solid #d4af37; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #d4af37; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="checkin-container">
+        <div class="checkin-form-container">
+            <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">Guest Check-in</h2>
+
+            <!-- Loading State -->
+            <div id="loading-container" class="text-center p-8">
+                <div class="spinner"></div>
+                <p class="text-lg font-semibold text-gray-700">Loading your booking details...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-container" class="text-center p-8 hidden">
+                <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-4"></i>
+                <h3 class="text-2xl font-bold text-gray-800">Unable to Load Booking</h3>
+                <p id="error-message" class="text-gray-600 mt-2"></p>
+                <div class="mt-8">
+                    <label for="booking_id_manual" class="font-medium">Or enter your Booking ID manually:</label>
+                    <div class="flex justify-center mt-2">
+                        <input type="text" id="booking_id_manual" class="p-2 border-2 rounded-l-lg focus:outline-none">
+                        <button class="bg-yellow-500 text-white font-bold p-2 rounded-r-lg" onclick="loadBookingManually()">Load</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Form -->
+            <div id="checkin-content" class="hidden">
+                <div class="booking-info" id="booking-info">
+                    <!-- Booking info will be injected here -->
+                </div>
+                
+                <form id="checkin-form">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b-2 pb-2 border-yellow-500">Identity Verification</h3>
+                    <div class="grid md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="id_proof_type" class="block mb-2 font-medium text-gray-600">ID Proof Type *</label>
+                            <select id="id_proof_type" class="w-full p-3 border-2 border-gray-200 rounded-lg" required>
+                                <option value="aadhar">Aadhar Card</option>
+                                <option value="passport">Passport</option>
+                                <option value="driving_license">Driving License</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="id_proof_number" class="block mb-2 font-medium text-gray-600">ID Proof Number *</label>
+                            <input type="text" id="id_proof_number" class="w-full p-3 border-2 border-gray-200 rounded-lg" required>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b-2 pb-2 border-yellow-500">Address Information</h3>
+                     <div class="mb-6">
+                        <label for="address" class="block mb-2 font-medium text-gray-600">Complete Address *</label>
+                        <textarea id="address" rows="3" class="w-full p-3 border-2 border-gray-200 rounded-lg" required></textarea>
+                    </div>
+
+                    <div class="text-center mt-8">
+                        <button type="submit" class="bg-green-500 text-white font-bold py-3 px-12 rounded-lg hover:bg-green-600 transition-colors text-lg">Complete Check-in</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Success State -->
+            <div id="success-container" class="text-center p-8 hidden">
+                <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+                <h3 class="text-2xl font-bold text-gray-800">Check-in Successful!</h3>
+                <p class="text-gray-600 mt-2">Welcome to Toosonj Guest House. Your invoice has been generated and your room details are ready.</p>
+                <p class="text-gray-600 mt-4"><strong>Room(s) Assigned:</strong> <span id="room-number" class="font-bold"></span></p>
+                <div class="mt-8">
+                    <a href="index.html" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg">Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="checkin.js"></script>
+</body>
+</html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Stay - Toosonj Guest House</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .booking-container { max-width: 800px; margin: 100px auto 50px; }
+        .booking-form { background: white; padding: 3rem; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .form-step { display: none; }
+        .form-step.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .step-indicator { display: flex; justify-content: center; margin-bottom: 2rem; }
+        .step { width: 40px; height: 40px; border-radius: 50%; background: #e9ecef; display: flex; align-items: center; justify-content: center; margin: 0 10px; font-weight: 600; position: relative; transition: all 0.3s ease; }
+        .step.active { background: #d4af37; color: white; transform: scale(1.1); }
+        .step.completed { background: #28a745; color: white; }
+        .room-option { border: 2px solid #e9ecef; border-radius: 10px; padding: 1.5rem; cursor: pointer; transition: all 0.3s ease; }
+        .room-option.selected { border-color: #d4af37; background: #fef9e7; }
+        .availability-info { background: #e8f5e8; border-left: 4px solid #28a745; border-radius: 8px; padding: 1rem; margin: 1rem 0; text-align: center; }
+        .availability-info.unavailable { background: #ffeaea; border-color: #dc3545; }
+        .booking-summary { background: #f8f9fa; border-radius: 10px; padding: 1.5rem; margin: 1.5rem 0; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e9ecef; }
+        .summary-row:last-child { border-bottom: none; }
+        .summary-total { border-top: 2px solid #d4af37; padding-top: 1rem; font-weight: 700; font-size: 1.3rem; }
+        .payment-option { border: 2px solid #e9ecef; border-radius: 10px; padding: 1.5rem; cursor: pointer; transition: all 0.3s ease; text-align: center; }
+        .payment-option.selected { border-color: #d4af37; background: #fef9e7; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #d4af37; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="booking-container">
+        <div class="booking-form">
+            <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">Book Your Stay</h2>
+            
+            <div class="step-indicator">
+                <div class="step active" data-step="1">1</div>
+                <div class="step" data-step="2">2</div>
+                <div class="step" data-step="3">3</div>
+                <div class="step" data-step="4">4</div>
+            </div>
+
+            <!-- Step 1: Dates and Room Selection -->
+            <div class="form-step active" id="step1">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">Select Dates & Rooms</h3>
+                <div class="grid md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="checkin" class="block mb-2 font-medium text-gray-600">Check-in Date</label>
+                        <input type="date" id="checkin" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500">
+                    </div>
+                    <div>
+                        <label for="checkout" class="block mb-2 font-medium text-gray-600">Check-out Date</label>
+                        <input type="date" id="checkout" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500">
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Deluxe Room -->
+                    <div class="room-option" data-room-type="deluxe">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-lg font-bold text-gray-800">Deluxe Room</h4>
+                            <div class="font-semibold text-gray-600">Total Rooms: 4</div>
+                        </div>
+                        <p class="text-gray-600 my-2">Spacious AC room with premium amenities.</p>
+                        <div id="availability-deluxe" class="availability-info hidden"></div>
+                        <div id="quantity-deluxe" class="mt-4 hidden">
+                            <label for="rooms-deluxe" class="font-medium text-gray-600">Number of Rooms:</label>
+                            <input type="number" id="rooms-deluxe" min="1" class="w-24 p-2 border-2 rounded-lg ml-2">
+                        </div>
+                    </div>
+                    <!-- Standard Room -->
+                    <div class="room-option" data-room-type="standard">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-lg font-bold text-gray-800">Standard Room</h4>
+                            <div class="font-semibold text-gray-600">Total Rooms: 3</div>
+                        </div>
+                        <p class="text-gray-600 my-2">Comfortable non-AC room with all essentials.</p>
+                        <div id="availability-standard" class="availability-info hidden"></div>
+                        <div id="quantity-standard" class="mt-4 hidden">
+                            <label for="rooms-standard" class="font-medium text-gray-600">Number of Rooms:</label>
+                            <input type="number" id="rooms-standard" min="1" class="w-24 p-2 border-2 rounded-lg ml-2">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end mt-8">
+                    <button type="button" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 transition-colors" onclick="nextStep(1)">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Guest Information -->
+            <div class="form-step" id="step2">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">Guest Information</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="guest_name" class="block mb-2 font-medium text-gray-600">Full Name *</label>
+                        <input type="text" id="guest_name" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500" required>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="guest_email" class="block mb-2 font-medium text-gray-600">Email Address *</label>
+                            <input type="email" id="guest_email" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500" required>
+                        </div>
+                        <div>
+                            <label for="guest_phone" class="block mb-2 font-medium text-gray-600">Phone Number *</label>
+                            <input type="tel" id="guest_phone" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between mt-8">
+                    <button type="button" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-colors" onclick="prevStep(2)">Previous</button>
+                    <button type="button" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 transition-colors" onclick="nextStep(2)">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Booking Summary -->
+            <div class="form-step" id="step3">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">Booking Summary</h3>
+                <div class="booking-summary" id="booking-summary">
+                    <!-- Summary will be injected here by JS -->
+                </div>
+                <div class="flex justify-between mt-8">
+                    <button type="button" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-colors" onclick="prevStep(3)">Previous</button>
+                    <button type="button" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 transition-colors" onclick="nextStep(3)">Proceed to Payment</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Payment -->
+            <div class="form-step" id="step4">
+                <div id="payment-selection">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Choose Payment Method</h3>
+                    <div class="grid md:grid-cols-2 gap-4 mb-6">
+                        <div class="payment-option" id="pay-upi-option" onclick="selectPaymentMethod('UPI')">
+                            <i class="fas fa-qrcode text-4xl mb-2 text-yellow-500"></i>
+                            <h4 class="text-lg font-bold text-gray-800">UPI / Online</h4>
+                            <p class="text-gray-600">Pay the full amount now.</p>
+                        </div>
+                        <div class="payment-option" id="pay-cash-option" onclick="selectPaymentMethod('CASH')">
+                            <i class="fas fa-money-bill-wave text-4xl mb-2 text-yellow-500"></i>
+                            <h4 class="text-lg font-bold text-gray-800">Pay at Hotel</h4>
+                            <p class="text-gray-600">Pay a small advance now to confirm.</p>
+                        </div>
+                    </div>
+                    <div id="payment-details" class="booking-summary hidden"></div>
+                    <div class="flex justify-between mt-8">
+                        <button type="button" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-colors" onclick="prevStep(4)">Previous</button>
+                        <button type="button" id="confirm-booking-btn" class="bg-green-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-600 transition-colors hidden" onclick="confirmBooking()">Confirm Booking</button>
+                    </div>
+                </div>
+
+                <div id="loading-container" class="text-center p-8 hidden">
+                    <div class="spinner"></div>
+                    <p class="text-lg font-semibold text-gray-700">Processing your booking...</p>
+                </div>
+
+                <div id="success-container" class="text-center p-8 hidden">
+                    <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800">Booking Confirmed!</h3>
+                    <p class="text-gray-600 mt-2">Your Booking ID is <strong id="booking-id" class="text-gray-900"></strong>.</p>
+                    <p class="text-gray-600 mt-2">A welcome email with your booking details and a secure check-in link has been sent to your email address.</p>
+                    <div class="mt-8">
+                        <a id="checkin-link-btn" href="checkin.html" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 transition-colors">Proceed to Check-in</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const API_BASE_URL = 'https://api.toosonj-guesthouse.com/v1'; // Mock API endpoint
+        const ROOM_CONFIG = {
+            deluxe: { name: 'Deluxe Room', total: 4, price: 1499, advance: 699 },
+            standard: { name: 'Standard Room', total: 3, price: 1099, advance: 499 }
+        };
+        const RAZORPAY_KEY = 'YOUR_RAZORPAY_KEY_ID'; // Replace with your actual key
+
+        // --- STATE MANAGEMENT ---
+        let bookingState = {
+            checkin: null,
+            checkout: null,
+            duration: 0,
+            rooms: {
+                deluxe: { quantity: 0, available: 0 },
+                standard: { quantity: 0, available: 0 }
+            },
+            guest: { name: '', email: '', phone: '' },
+            payment: {
+                method: null, // 'UPI' or 'CASH'
+                totalAmount: 0,
+                amountToPay: 0 // Can be total or advance
+            },
+            bookingId: null,
+            checkinToken: null
+        };
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            document.getElementById('checkin').setAttribute('min', todayStr);
+
+            document.getElementById('checkin').addEventListener('change', handleDateChange);
+            document.getElementById('checkout').addEventListener('change', handleDateChange);
+        });
+
+        // --- CORE FUNCTIONS ---
+
+        /**
+         * Handles changes in check-in or check-out dates to trigger availability check.
+         */
+        async function handleDateChange() {
+            const checkinDate = document.getElementById('checkin').value;
+            const checkoutDate = document.getElementById('checkout').value;
+
+            if (checkinDate) {
+                const nextDay = new Date(checkinDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                document.getElementById('checkout').setAttribute('min', nextDay.toISOString().split('T')[0]);
+            }
+
+            if (checkinDate && checkoutDate && checkoutDate > checkinDate) {
+                bookingState.checkin = checkinDate;
+                bookingState.checkout = checkoutDate;
+                await checkAllRoomsAvailability();
+            }
+        }
+
+        /**
+         * Simulates an API call to check availability for all room types.
+         */
+        async function checkAllRoomsAvailability() {
+            // Show a loading indicator if desired
+            for (const type in ROOM_CONFIG) {
+                const availabilityInfo = document.getElementById(`availability-${type}`);
+                availabilityInfo.textContent = 'Checking...';
+                availabilityInfo.classList.remove('hidden');
+            }
+
+            // Mock API call
+            console.log(`Checking availability from ${bookingState.checkin} to ${bookingState.checkout}`);
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+
+            // Process results for each room type
+            for (const type in ROOM_CONFIG) {
+                // Mocked response from backend
+                const availableCount = mockGetAvailableRooms(type, bookingState.checkin, bookingState.checkout);
+                updateAvailabilityUI(type, availableCount);
+            }
+        }
+
+        /**
+         * Mocks backend logic to determine available rooms.
+         * In a real app, this would query a database.
+         * @param {string} roomType - 'deluxe' or 'standard'
+         * @returns {number} - Number of available rooms.
+         */
+        function mockGetAvailableRooms(roomType, checkin, checkout) {
+            // This is a simple mock. A real backend would check bookings table.
+            // For demonstration, let's make it seem like some rooms are booked.
+            const dayOfMonth = new Date(checkin).getDate();
+            const totalRooms = ROOM_CONFIG[roomType].total;
+            if (dayOfMonth % 5 === 0) return Math.max(0, totalRooms - 2); // Heavy booking
+            if (dayOfMonth % 3 === 0) return Math.max(0, totalRooms - 1); // Light booking
+            return totalRooms; // All available
+        }
+
+        /**
+         * Updates the UI to show room availability and quantity selector.
+         * @param {string} type - 'deluxe' or 'standard'
+         * @param {number} availableCount - Number of available rooms.
+         */
+        function updateAvailabilityUI(type, availableCount) {
+            const config = ROOM_CONFIG[type];
+            const availabilityInfo = document.getElementById(`availability-${type}`);
+            const quantityContainer = document.getElementById(`quantity-${type}`);
+            const quantityInput = document.getElementById(`rooms-${type}`);
+
+            bookingState.rooms[type].available = availableCount;
+
+            if (availableCount > 0) {
+                availabilityInfo.innerHTML = `<i class="fas fa-check-circle mr-2"></i> ${availableCount} of ${config.total} rooms available`;
+                availabilityInfo.className = 'availability-info';
+                quantityInput.max = availableCount;
+                quantityInput.value = 0;
+                quantityContainer.classList.remove('hidden');
+            } else {
+                availabilityInfo.innerHTML = `<i class="fas fa-times-circle mr-2"></i> No rooms available for the selected dates.`;
+                availabilityInfo.className = 'availability-info unavailable';
+                quantityContainer.classList.add('hidden');
+            }
+            availabilityInfo.classList.remove('hidden');
+        }
+
+
+        // --- NAVIGATION & VALIDATION ---
+
+        function nextStep(currentStep) {
+            if (!validateStep(currentStep)) return;
+
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('completed');
+            document.querySelector(`.step[data-step="${currentStep + 1}"]`).classList.add('active');
+
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`step${currentStep + 1}`).classList.add('active');
+
+            // Pre-computation for next steps
+            if (currentStep === 2) updateBookingSummary();
+            if (currentStep === 3) preparePaymentStep();
+        }
+
+        function prevStep(currentStep) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('completed');
+            document.querySelector(`.step[data-step="${currentStep - 1}"]`).classList.add('active');
+
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`step${currentStep - 1}`).classList.add('active');
+        }
+
+        function validateStep(step) {
+            switch (step) {
+                case 1:
+                    bookingState.rooms.deluxe.quantity = parseInt(document.getElementById('rooms-deluxe').value) || 0;
+                    bookingState.rooms.standard.quantity = parseInt(document.getElementById('rooms-standard').value) || 0;
+                    if (bookingState.rooms.deluxe.quantity === 0 && bookingState.rooms.standard.quantity === 0) {
+                        alert('Please select at least one room.');
+                        return false;
+                    }
+                    if (bookingState.rooms.deluxe.quantity > bookingState.rooms.deluxe.available || bookingState.rooms.standard.quantity > bookingState.rooms.standard.available) {
+                        alert('You have selected more rooms than are available.');
+                        return false;
+                    }
+                    return true;
+                case 2:
+                    bookingState.guest.name = document.getElementById('guest_name').value.trim();
+                    bookingState.guest.email = document.getElementById('guest_email').value.trim();
+                    bookingState.guest.phone = document.getElementById('guest_phone').value.trim();
+                    if (!bookingState.guest.name || !bookingState.guest.email || !bookingState.guest.phone) {
+                        alert('Please fill in all guest information fields.');
+                        return false;
+                    }
+                    if (!/^\S+@\S+\.\S+$/.test(bookingState.guest.email)) {
+                        alert('Please enter a valid email address.');
+                        return false;
+                    }
+                    return true;
+                case 3:
+                    return true; // No validation needed to proceed to payment choice
+            }
+        }
+
+
+        // --- SUMMARY & PAYMENT ---
+
+        function updateBookingSummary() {
+            const checkin = new Date(bookingState.checkin);
+            const checkout = new Date(bookingState.checkout);
+            bookingState.duration = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
+
+            let total = 0;
+            let summaryHTML = `
+                <div class="summary-row"><span>Check-in:</span> <strong>${formatDate(checkin)}</strong></div>
+                <div class="summary-row"><span>Check-out:</span> <strong>${formatDate(checkout)}</strong></div>
+                <div class="summary-row"><span>Duration:</span> <strong>${bookingState.duration} nights</strong></div>
+                <div class="summary-row"><span>Guest:</span> <strong>${bookingState.guest.name}</strong></div>
+                <hr class="my-4">
+            `;
+
+            for (const type in bookingState.rooms) {
+                const room = bookingState.rooms[type];
+                if (room.quantity > 0) {
+                    const config = ROOM_CONFIG[type];
+                    const roomTotal = room.quantity * config.price * bookingState.duration;
+                    total += roomTotal;
+                    summaryHTML += `
+                        <div class="summary-row">
+                            <span>${room.quantity} x ${config.name}</span>
+                            <strong>₹${roomTotal.toLocaleString()}</strong>
+                        </div>
+                    `;
+                }
+            }
+            
+            bookingState.payment.totalAmount = total;
+            summaryHTML += `
+                <div class="summary-row summary-total">
+                    <span>Total Amount:</span>
+                    <span>₹${total.toLocaleString()}</span>
+                </div>
+            `;
+
+            document.getElementById('booking-summary').innerHTML = summaryHTML;
+        }
+
+        function preparePaymentStep() {
+            // Reset payment selection
+            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+            document.getElementById('payment-details').classList.add('hidden');
+            document.getElementById('confirm-booking-btn').classList.add('hidden');
+            bookingState.payment.method = null;
+        }
+
+        function selectPaymentMethod(method) {
+            bookingState.payment.method = method;
+            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+            document.getElementById(`pay-${method.toLowerCase()}-option`).classList.add('selected');
+
+            let amountToPay = 0;
+            let detailsHTML = '';
+
+            if (method === 'UPI') {
+                amountToPay = bookingState.payment.totalAmount;
+                detailsHTML = `<p class="text-center">You will be charged the full amount of <strong>₹${amountToPay.toLocaleString()}</strong>.</p>`;
+            } else { // CASH
+                let advanceTotal = 0;
+                for (const type in bookingState.rooms) {
+                    if (bookingState.rooms[type].quantity > 0) {
+                        advanceTotal += bookingState.rooms[type].quantity * ROOM_CONFIG[type].advance;
+                    }
+                }
+                amountToPay = advanceTotal;
+                detailsHTML = `
+                    <p class="text-center">To confirm your booking, please pay an advance of <strong>₹${amountToPay.toLocaleString()}</strong>.</p>
+                    <p class="text-center text-sm text-gray-500 mt-2">The remaining balance of ₹${(bookingState.payment.totalAmount - amountToPay).toLocaleString()} is due at check-in.</p>
+                `;
+            }
+            
+            bookingState.payment.amountToPay = amountToPay;
+            const paymentDetails = document.getElementById('payment-details');
+            paymentDetails.innerHTML = detailsHTML;
+            paymentDetails.classList.remove('hidden');
+            document.getElementById('confirm-booking-btn').classList.remove('hidden');
+        }
+
+        /**
+         * Final step: "calls" the backend to confirm and sends all data.
+         */
+        async function confirmBooking() {
+            document.getElementById('payment-selection').classList.add('hidden');
+            document.getElementById('loading-container').classList.remove('hidden');
+
+            // MOCK API Call to create booking and get payment order
+            console.log('Sending booking data to backend:', bookingState);
+            await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
+
+            const mockBackendResponse = {
+                success: true,
+                bookingId: `TGH-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+                checkinToken: `tok_${Math.random().toString(36).substr(2, 16)}`,
+                razorpayOrderId: `order_${Math.random().toString(36).substr(2, 12)}`
+            };
+            
+            bookingState.bookingId = mockBackendResponse.bookingId;
+            bookingState.checkinToken = mockBackendResponse.checkinToken;
+
+            // --- MOCK RAZORPAY INTEGRATION ---
+            // In a real app, you would use the Razorpay Checkout script here.
+            // We will simulate a successful payment.
+            console.log(`Simulating Razorpay payment for order ${mockBackendResponse.razorpayOrderId} of amount ₹${bookingState.payment.amountToPay}`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            console.log('Payment successful!');
+            
+            // --- MOCK FINAL API CALL to confirm payment and send email ---
+            console.log(`Confirming payment for booking ${bookingState.bookingId} with backend.`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log('Backend confirmed. Mock email sent.');
+
+            // --- SHOW SUCCESS UI ---
+            document.getElementById('loading-container').classList.add('hidden');
+            document.getElementById('booking-id').textContent = bookingState.bookingId;
+            const checkinLink = document.getElementById('checkin-link-btn');
+            checkinLink.href = `checkin.html?token=${bookingState.checkinToken}`;
+            localStorage.setItem('lastBookingId', bookingState.bookingId);
+            localStorage.setItem('lastCheckinToken', bookingState.checkinToken);
+            document.getElementById('success-container').classList.remove('hidden');
+        }
+
+
+        // --- UTILITY FUNCTIONS ---
+        function formatDate(date) {
+            return date.toLocaleDateString('en-GB', {
+                day: 'numeric', month: 'short', year: 'numeric'
+            });
+        }
+    </script>
+</body>
+</html>
