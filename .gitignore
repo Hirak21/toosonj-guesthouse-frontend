@@ -1,0 +1,6 @@
+# VS Code files
+.vscode/
+
+# Operating System files
+.DS_Store
+Thumbs.db
