@@ -3,494 +3,604 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice & Finalization - Toosonj Guest House</title>
-    <!-- Google Fonts: Inter for modern typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for icons -->
+    <title>Book Your Stay - Toosonj Guest House</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2pdf.js for PDF generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+    <!-- Razorpay SDK for payment processing -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
-        /* Base font and background color */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* Lighter background for a modern feel */
-            color: #333; /* Default text color */
-        }
-        /* Main container for the invoice, centered and with max-width */
-        .invoice-container {
-            max-width: 900px; /* Slightly wider for better content display */
-            margin: 40px auto;
-            padding: 15px; /* Add some padding for smaller screens */
-        }
-        /* Styling for the main invoice box */
-        .invoice-box {
-            background: white;
-            padding: 2rem 3rem; /* Adjusted padding */
-            border-radius: 15px; /* More pronounced rounded corners */
-            box-shadow: 0 15px 50px rgba(0,0,0,0.15); /* Stronger, softer shadow */
-            transition: all 0.3s ease-in-out; /* Smooth transitions for any dynamic changes */
-        }
-        /* Spinner for loading state */
-        .spinner {
-            border: 4px solid #e0e0e0;
-            border-top: 4px solid #d4af37; /* Gold color for the spinner */
-            border-radius: 50%;
-            width: 50px; /* Slightly larger spinner */
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 2rem auto 1.5rem;
-        }
-        /* Keyframe animation for the spinner */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Print styles to hide non-invoice elements and format for printing */
-        @media print {
-            body * {
-                visibility: hidden; /* Hide everything by default */
-            }
-            .invoice-box, .invoice-box * {
-                visibility: visible; /* Make invoice content visible */
-            }
-            .invoice-box {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                margin: 0;
-                padding: 1rem;
-                border: none;
-                box-shadow: none;
-                border-radius: 0; /* No rounded corners in print */
-            }
-            .no-print {
-                display: none; /* Hide elements not needed in print */
-            }
-        }
-        /* Custom button styling for a more modern look */
-        .btn-primary {
-            background: linear-gradient(to right, #4a90e2, #6a5acd); /* Blue to purple gradient */
-            color: white;
-            font-weight: 600;
-            padding: 14px 30px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            border: none;
-            cursor: pointer;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        }
-        .btn-success {
-            background: linear-gradient(to right, #28a745, #218838); /* Green gradient */
-            color: white;
-            font-weight: 600;
-            padding: 14px 30px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            border: none;
-            cursor: pointer;
-        }
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        }
-        .btn-add {
-            background-color: #0d6efd; /* Bootstrap primary blue */
-            color: white;
-            font-weight: 500;
-            padding: 10px 20px;
-            border-radius: 8px;
-            transition: background-color 0.2s ease;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        }
-        .btn-add:hover {
-            background-color: #0a58ca;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .booking-container { max-width: 800px; margin: 50px auto; }
+        .booking-form { background: white; padding: 2rem 3rem; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .form-step { display: none; }
+        .form-step.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .step-indicator { display: flex; justify-content: center; margin-bottom: 2rem; }
+        .step { width: 40px; height: 40px; border-radius: 50%; background: #e9ecef; display: flex; align-items: center; justify-content: center; margin: 0 10px; font-weight: 600; position: relative; transition: all 0.3s ease; }
+        .step.active { background: #d4af37; color: white; transform: scale(1.1); }
+        .step.completed { background: #28a745; color: white; }
+        .room-option, .day-stay-option { border: 2px solid #e9ecef; border-radius: 10px; padding: 1.5rem; transition: all 0.3s ease; }
+        .availability-info { background: #f0f9ff; border-left: 4px solid #0ea5e9; border-radius: 8px; padding: 1rem; margin: 1rem 0; text-align: center; }
+        .availability-info.unavailable { background: #fff1f2; border-color: #f43f5e; }
+        .booking-summary { background: #f8f9fa; border-radius: 10px; padding: 1.5rem; margin: 1.5rem 0; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e9ecef; }
+        .summary-row:last-child { border-bottom: none; }
+        .summary-total { border-top: 2px solid #d4af37; padding-top: 1rem; font-weight: 700; font-size: 1.3rem; }
+        .payment-option { border: 2px solid #e9ecef; border-radius: 10px; padding: 1.5rem; cursor: pointer; transition: all 0.3s ease; text-align: center; }
+        .payment-option.selected { border-color: #d4af37; background: #fef9e7; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #d4af37; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #alert-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 1rem 2rem; border-radius: 8px; color: white; z-index: 1000; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        #alert-box.error { background-color: #dc3545; }
+        #alert-box.success { background-color: #28a745; }
+        .occupancy-row { background-color: #fafafa; padding: 0.75rem; border-radius: 8px; margin-top: 0.75rem; }
     </style>
 </head>
 <body>
-    <div class="invoice-container">
-        <!-- Loading State -->
-        <div id="loading-container" class="text-center p-8 bg-white rounded-xl shadow-lg">
-            <div class="spinner"></div>
-            <p class="text-xl font-semibold text-gray-700">Loading Booking & Services...</p>
-            <p class="text-gray-500 mt-2">Please wait while we retrieve the details.</p>
-        </div>
+    <div id="alert-box"></div>
+    <div class="booking-container">
+        <div class="booking-form">
+            <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">Book Your Stay</h2>
+            
+            <div class="step-indicator">
+                <div class="step active" data-step="1">1</div>
+                <div class="step" data-step="2">2</div>
+                <div class="step" data-step="3">3</div>
+                <div class="step" data-step="4">4</div>
+            </div>
 
-        <!-- Error State -->
-        <div id="error-container" class="text-center p-8 bg-white rounded-xl shadow-lg hidden">
-             <i class="fas fa-exclamation-triangle text-7xl text-red-500 mb-6 animate-bounce"></i>
-             <h3 class="text-3xl font-bold text-gray-800 mb-3">Oops! Something went wrong.</h3>
-             <p id="error-message" class="text-gray-600 text-lg mt-2"></p>
-             <button onclick="window.location.reload()" class="mt-8 btn-primary">
-                 <i class="fas fa-redo-alt mr-2"></i> Try Again
-             </button>
-        </div>
-
-        <!-- Main Content -->
-        <div id="main-content" class="hidden">
-            <div class="invoice-box" id="invoice-to-print">
-                <!-- Invoice Header -->
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 pb-4 border-b border-gray-200">
-                    <div class="mb-6 md:mb-0">
-                        <h1 class="text-4xl font-extrabold text-gray-900 leading-tight" id="guest-house-name"></h1>
-                        <p class="text-gray-600 mt-1 text-md" id="guest-house-address"></p>
-                        <p class="text-gray-600 text-md">GSTIN: <span id="guest-house-gstin" class="font-semibold text-gray-700"></span></p>
+            <!-- Step 1: Dates and Room Selection -->
+            <div class="form-step active" id="step1">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">1. Select Booking Type & Dates</h3>
+                 <!-- Booking Type Toggle -->
+                <div class="flex justify-center bg-gray-200 rounded-lg p-1 mb-6">
+                    <button id="btn-night-stay" class="flex-1 py-2 px-4 rounded-md bg-yellow-500 text-white font-semibold" onclick="selectBookingType('night')">Night Stay</button>
+                    <button id="btn-day-stay" class="flex-1 py-2 px-4 rounded-md text-gray-600 font-semibold" onclick="selectBookingType('day')">Day Stay (6 Hours)</button>
+                </div>
+                
+                <!-- Night Stay Inputs -->
+                <div id="night-stay-inputs">
+                    <div class="grid md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="checkin" class="block mb-2 font-medium text-gray-600">Check-in Date</label>
+                            <input type="date" id="checkin" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500">
+                        </div>
+                        <div>
+                            <label for="checkout" class="block mb-2 font-medium text-gray-600">Check-out Date</label>
+                            <input type="date" id="checkout" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500">
+                        </div>
                     </div>
-                    <div class="text-left md:text-right">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-2">TAX INVOICE</h2>
-                        <p class="text-gray-600 text-md">Invoice #: <span id="invoice-number" class="font-semibold text-gray-700"></span></p>
-                        <p class="text-gray-600 text-md">Date: <span id="invoice-date" class="font-semibold text-gray-700"></span></p>
+                </div>
+                 <!-- Day Stay Inputs -->
+                <div id="day-stay-inputs" class="hidden">
+                     <div class="grid md:grid-cols-1 gap-4 mb-6">
+                        <div>
+                            <label for="day-stay-date" class="block mb-2 font-medium text-gray-600">Select Date</label>
+                            <input type="date" id="day-stay-date" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500">
+                        </div>
                     </div>
                 </div>
 
-                <!-- Guest Details -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 border-t border-b border-gray-200 py-6">
-                    <div>
-                        <h3 class="font-bold text-lg text-gray-700 mb-2">Bill To:</h3>
-                        <p id="guest-name" class="text-gray-800 font-medium"></p>
-                        <p id="guest-address" class="text-gray-600"></p>
-                        <p id="guest-email" class="text-gray-600"></p>
-                        <p id="guest-phone" class="text-gray-600"></p>
-                    </div>
-                    <div class="text-left md:text-right mt-4 md:mt-0">
-                        <p class="text-gray-600 text-md mb-1">Booking ID: <span id="booking-id" class="font-bold text-gray-800"></span></p>
-                        <p class="text-gray-600 text-md mb-1">Check-in: <span id="checkin-date" class="font-bold text-gray-800"></span></p>
-                        <p class="text-gray-600 text-md">Check-out: <span id="checkout-date" class="font-bold text-gray-800"></span></p>
-                    </div>
+                <hr class="my-6">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">2. Select Rooms</h3>
+
+                <!-- Room Options Container -->
+                <div id="room-options-container" class="space-y-6">
+                    <!-- This will be populated by JS -->
                 </div>
 
-                <!-- Invoice Items Table -->
-                <div class="overflow-x-auto mb-10">
-                    <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
-                        <thead>
-                            <tr class="bg-gray-100 border-b border-gray-200">
-                                <th class="p-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Item Description</th>
-                                <th class="p-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">HSN/SAC</th>
-                                <th class="p-4 text-right text-sm font-semibold text-gray-700 uppercase tracking-wider">Quantity</th>
-                                <th class="p-4 text-right text-sm font-semibold text-gray-700 uppercase tracking-wider">Rate</th>
-                                <th class="p-4 text-right text-sm font-semibold text-gray-700 uppercase tracking-wider">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody id="invoice-items" class="divide-y divide-gray-100">
-                            <!-- Items will be injected here -->
-                        </tbody>
-                    </table>
+                <div class="flex justify-end mt-8">
+                    <button type="button" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 transition-colors" onclick="nextStep(1)">Next</button>
                 </div>
+            </div>
 
-                <!-- Add Extra Services Section -->
-                <div class="mb-10 p-6 bg-blue-50 rounded-xl shadow-inner no-print">
-                    <h3 class="font-bold text-xl text-blue-800 mb-4 flex items-center">
-                        <i class="fas fa-plus-circle mr-3 text-blue-600"></i> Add Extra Services
-                    </h3>
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                        <select id="service-select" class="flex-grow p-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-300 text-gray-700">
-                            <!-- Services will be populated here -->
-                        </select>
-                        <input type="number" id="service-quantity" value="1" min="1" class="w-full sm:w-24 p-3 border border-blue-200 rounded-lg text-center focus:ring-2 focus:ring-blue-300 focus:border-blue-300 text-gray-700">
-                        <button onclick="addServiceToInvoice()" class="btn-add w-full sm:w-auto">
-                            <i class="fas fa-cart-plus mr-2"></i> Add Service
+            <!-- Step 2: Guest Information -->
+            <div class="form-step" id="step2">
+                 <h3 class="text-xl font-semibold mb-4 text-gray-700">Guest Information</h3>
+                 <div class="space-y-4">
+                     <div>
+                         <label for="guest_email" class="block mb-2 font-medium text-gray-600">Email Address *</label>
+                         <input type="email" id="guest_email" placeholder="e.g., user@example.com" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500" required>
+                     </div>
+                     <div>
+                         <label for="guest_phone" class="block mb-2 font-medium text-gray-600">Phone Number *</label>
+                         <div class="flex">
+                             <span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">+91</span>
+                             <input type="tel" id="guest_phone" placeholder="e.g., 9876543210" class="w-full p-3 border-2 border-gray-200 rounded-r-lg focus:outline-none focus:border-yellow-500" required>
+                         </div>
+                     </div>
+                 </div>
+                 <div class="flex justify-between mt-8">
+                     <button type="button" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-colors" onclick="prevStep(2)">Previous</button>
+                     <button type="button" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 transition-colors" onclick="nextStep(2)">Next</button>
+                 </div>
+            </div>
+
+            <!-- Step 3: Booking Summary -->
+            <div class="form-step" id="step3">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">Booking Summary</h3>
+                <div class="booking-summary" id="booking-summary">
+                    <!-- Summary will be injected here by JS -->
+                </div>
+                <div class="flex justify-between mt-8">
+                    <button type="button" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-colors" onclick="prevStep(3)">Previous</button>
+                    <button type="button" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 transition-colors" onclick="nextStep(3)">Proceed to Payment</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Payment -->
+            <div class="form-step" id="step4">
+                <div id="payment-selection">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Choose Payment Method</h3>
+                    <div class="grid md:grid-cols-2 gap-4 mb-6">
+                        <div class="payment-option" id="pay-upi-option" onclick="selectPaymentMethod('UPI')">
+                            <i class="fas fa-qrcode text-4xl mb-2 text-yellow-500"></i>
+                            <h4 class="text-lg font-bold text-gray-800">UPI / Online</h4>
+                            <p class="text-gray-600">Pay the full amount now.</p>
+                        </div>
+                        <div class="payment-option" id="pay-cash-option" onclick="selectPaymentMethod('CASH')">
+                            <i class="fas fa-money-bill-wave text-4xl mb-2 text-yellow-500"></i>
+                            <h4 class="text-lg font-bold text-gray-800">Pay at Arrival</h4>
+                            <p class="text-gray-600">Pay 30% advance now to confirm.</p>
+                        </div>
+                    </div>
+                    <div id="payment-details" class="booking-summary hidden"></div>
+                    <div class="flex justify-between mt-8">
+                        <button type="button" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-colors" onclick="prevStep(4)">Previous</button>
+                        <button type="button" id="confirm-booking-btn" class="bg-green-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-600 transition-colors hidden" onclick="initiateBooking()">
+                            <span id="confirm-booking-btn-text">Proceed to Pay</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Totals Section -->
-                <div class="flex justify-end">
-                    <div class="w-full md:w-2/3 lg:w-1/2">
-                        <div class="flex justify-between py-3 border-b border-gray-200">
-                            <span class="font-semibold text-gray-700 text-lg">Subtotal</span>
-                            <span id="subtotal" class="font-bold text-gray-900 text-lg"></span>
-                        </div>
-                        <div id="gst-details" class="border-b border-gray-200 pb-2">
-                           <!-- GST rows will be injected here -->
-                        </div>
-                        <div class="flex justify-between py-4 font-extrabold text-2xl border-t-2 border-gray-800 mt-4">
-                            <span>TOTAL AMOUNT</span>
-                            <span id="grand-total" class="text-green-700"></span>
-                        </div>
-                         <div class="flex justify-between py-2 text-gray-700 text-lg">
-                            <span>Advance Paid</span>
-                            <span id="advance-paid" class="font-semibold text-gray-800"></span>
-                        </div>
-                         <div class="flex justify-between py-3 font-extrabold text-2xl text-red-600 border-t border-gray-200 mt-2">
-                            <span>BALANCE DUE</span>
-                            <span id="balance-due"></span>
-                        </div>
-                    </div>
+                <div id="loading-container" class="text-center p-8 hidden">
+                    <div class="spinner"></div>
+                    <p class="text-lg font-semibold text-gray-700">Processing your booking...</p>
                 </div>
-            </div>
 
-            <!-- Action Buttons -->
-            <div class="text-center mt-10 no-print">
-                <button onclick="generatePDF()" class="btn-success">
-                    <i class="fas fa-file-pdf mr-3"></i> Download / Print Invoice
-                </button>
+                <div id="success-container" class="text-center p-8 hidden">
+                    <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-800">Booking Confirmed!</h3>
+                    <p class="text-gray-600 mt-2">Your Booking ID is <strong id="booking-id" class="text-gray-900"></strong>.</p>
+                    <p class="text-gray-600 mt-2">A confirmation email with your booking details and a secure check-in link has been sent.</p>
+                </div>
             </div>
         </div>
     </div>
 
-   <script>
-        // --- GLOBAL STATE & CONFIG ---
-        let currentBooking = null;
-        let availableServices = [];
-        let invoiceItems = [];
-        let invoiceConfig = null; // Will store the fetched configuration
+    <script>
+        // --- CONFIGURATION ---
+        const API_BASE_URL = 'https://toosonj-guesthouse-api.onrender.com'; // Connect to your local backend
+        const RAZORPAY_KEY = 'YOUR_RAZORPAY_KEY_ID'; // IMPORTANT: Replace with your actual Razorpay Key ID
 
-        // IMPORTANT: When deploying your backend, replace 'http://localhost:3000'
-        // with your deployed backend's URL (e.g., 'https://your-backend-api.render.com')
-        const API_BASE_URL = 'https://toosonj-guesthouse-api.onrender.com'; 
+        const ROOM_CONFIG = {
+            night: {
+                deluxe: { name: 'Deluxe Room', totalInventory: 4, occupancies: { single: 1399, double: 1499 }, extra: 500 },
+                standard: { name: 'Standard Room', totalInventory: 3, occupancies: { single: 899, double: 999 }, extra: 500 }
+            },
+            day: {
+                deluxe: { name: 'Deluxe Day Stay', totalInventory: 4, price: 699 },
+                standard: { name: 'Standard Day Stay', totalInventory: 3, price: 599 }
+            }
+        };
 
+        // --- STATE MANAGEMENT ---
+        let bookingState = {};
+        const resetBookingState = () => {
+            bookingState = {
+                bookingType: 'night', // 'night' or 'day'
+                checkinDate: null,
+                checkoutDate: null,
+                duration: 0,
+                rooms: [], // Array of selected room objects
+                guest: { email: '', phone: '' },
+                payment: { method: null, totalAmount: 0, amountToPay: 0 },
+                bookingId: null,
+                availability: {} // Stores available room counts
+            };
+        };
+        
         // --- INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const bookingIdFromUrl = urlParams.get('bookingId'); // Use 'bookingId' as the parameter name
+        document.addEventListener('DOMContentLoaded', () => {
+            resetBookingState();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('checkin').setAttribute('min', today);
+            document.getElementById('day-stay-date').setAttribute('min', today);
 
-            if (!bookingIdFromUrl) {
-                showError("No booking ID provided. Please use the link with a valid booking ID.");
+            document.getElementById('checkin').addEventListener('change', handleDateChange);
+            document.getElementById('checkout').addEventListener('change', handleDateChange);
+            document.getElementById('day-stay-date').addEventListener('change', handleDateChange);
+            
+            renderRoomOptions();
+        });
+
+        // --- UI RENDERING & EVENT HANDLING ---
+        function selectBookingType(type) {
+            bookingState.bookingType = type;
+            document.getElementById('btn-night-stay').classList.toggle('bg-yellow-500', type === 'night');
+            document.getElementById('btn-night-stay').classList.toggle('text-white', type === 'night');
+            document.getElementById('btn-day-stay').classList.toggle('bg-yellow-500', type === 'day');
+            document.getElementById('btn-day-stay').classList.toggle('text-white', type === 'day');
+            
+            document.getElementById('night-stay-inputs').classList.toggle('hidden', type === 'day');
+            document.getElementById('day-stay-inputs').classList.toggle('hidden', type === 'night');
+
+            renderRoomOptions();
+            handleDateChange(); // Re-check availability for the new type
+        }
+
+        function renderRoomOptions() {
+            const container = document.getElementById('room-options-container');
+            container.innerHTML = '';
+            const config = ROOM_CONFIG[bookingState.bookingType];
+
+            for (const type in config) {
+                const room = config[type];
+                let priceInfo = '';
+                if (bookingState.bookingType === 'night') {
+                    priceInfo = `Single: ₹${room.occupancies.single}/night | Double: ₹${room.occupancies.double}/night`;
+                } else {
+                    priceInfo = `Price: ₹${room.price} for 6 hours`;
+                }
+
+                const roomHTML = `
+                    <div class="room-option" data-room-type="${type}">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-lg font-bold text-gray-800">${room.name}</h4>
+                            <div class="font-semibold text-gray-600">Total Rooms: ${room.totalInventory}</div>
+                        </div>
+                        <p class="text-gray-600 my-2">${priceInfo}</p>
+                        <div id="availability-${type}" class="availability-info hidden"></div>
+                        <div id="controls-${type}" class="mt-4 hidden">
+                            <label class="font-medium text-gray-600">Number of Rooms:</label>
+                            <input type="number" id="quantity-${type}" value="0" min="0" class="w-24 p-2 border-2 rounded-lg ml-2" onchange="handleQuantityChange('${type}')">
+                            <div id="occupancy-options-${type}" class="mt-2 space-y-2"></div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += roomHTML;
+            }
+        }
+
+        function handleQuantityChange(type) {
+            const quantity = parseInt(document.getElementById(`quantity-${type}`).value) || 0;
+            const maxAvailable = bookingState.availability[type] || 0;
+
+            if (quantity > maxAvailable) {
+                showAlert(`Only ${maxAvailable} ${type} rooms are available.`, 'error');
+                document.getElementById(`quantity-${type}`).value = maxAvailable;
                 return;
             }
             
-            // Fetch configuration and booking details in parallel
-            const configPromise = fetchConfig();
-            const bookingPromise = fetchBooking(bookingIdFromUrl);
+            renderOccupancyOptions(type, quantity);
+        }
 
-            try {
-                [invoiceConfig, currentBooking] = await Promise.all([configPromise, bookingPromise]);
-                availableServices = invoiceConfig.services; // Get services from fetched config
+        function renderOccupancyOptions(type, quantity) {
+            const container = document.getElementById(`occupancy-options-${type}`);
+            container.innerHTML = '';
+            if (bookingState.bookingType === 'day' || quantity === 0) return;
 
-                populateServiceDropdown();
-                initializeInvoice();
-                showMainContent();
-            } catch (error) {
-                showError(error.message);
+            const roomConfig = ROOM_CONFIG.night[type];
+            for (let i = 0; i < quantity; i++) {
+                const optionHTML = `
+                    <div class="occupancy-row flex items-center gap-4">
+                        <span class="font-semibold">Room ${i + 1}:</span>
+                        <select class="flex-grow p-2 border rounded-md" data-room-index="${i}" onchange="updateRoomState('${type}', ${i})">
+                            <option value="single">Single Occupancy (₹${roomConfig.occupancies.single})</option>
+                            <option value="double">Double Occupancy (₹${roomConfig.occupancies.double})</option>
+                        </select>
+                        <label class="items-center hidden">
+                            <input type="checkbox" data-extra-index="${i}" onchange="updateRoomState('${type}', ${i})">
+                            <span class="ml-2">Extra Occupant (+₹${roomConfig.extra})</span>
+                        </label>
+                    </div>
+                `;
+                container.innerHTML += optionHTML;
             }
-        });
-
-        // --- REAL API CALLS ---
-        /**
-         * Fetches real booking details from your backend.
-         * @param {string} bookingId - The booking ID to fetch.
-         * @returns {Promise<Object>} - A promise that resolves with real booking data.
-         */
-        async function fetchBooking(bookingId) {
-            console.log(`Fetching booking with ID: ${bookingId} from backend...`);
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}`);
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || `Failed to fetch booking details for ID: ${bookingId}`);
-                }
-                const data = await response.json();
-                console.log("Fetched booking data:", data);
-
-                // Adapt the backend response structure to fit the frontend's expected format
-                // Ensure guest properties are available, provide defaults if not
-                const guestData = data.guest || {};
-                const paymentData = data.payment || { amountPaid: 0 };
-
-                return {
-                    bookingId: data.id, 
-                    checkin: data.checkinDate,
-                    checkout: data.checkoutDate,
-                    duration: (new Date(data.checkoutDate) - new Date(data.checkinDate)) / (1000 * 60 * 60 * 24),
-                    guest: {
-                        name: guestData.name || 'N/A',
-                        email: guestData.email || 'N/A',
-                        phone: guestData.phone || 'N/A',
-                        address: guestData.address || 'N/A',
-                        city: guestData.city || 'N/A',
-                        state: guestData.state || 'N/A',
-                        pincode: guestData.pincode || 'N/A'
-                    },
-                    rooms: data.rooms || [], // Ensure rooms is an array, provide default if not
-                    payment: paymentData
-                };
-
-            } catch (error) {
-                console.error("Error fetching booking:", error);
-                throw new Error(`Unable to load booking details: ${error.message}`);
+        }
+        
+        function updateRoomState(type, index) {
+            // This is a simplified stub. A full implementation would update bookingState.rooms array
+            // based on the selections here. For brevity, the main logic is in validateStep1.
+            const occupancySelect = document.querySelector(`select[data-room-index='${index}']`);
+            const extraCheckboxContainer = occupancySelect.nextElementSibling;
+            if(occupancySelect.value === 'double') {
+                extraCheckboxContainer.classList.remove('hidden');
+                extraCheckboxContainer.classList.add('flex');
+            } else {
+                extraCheckboxContainer.classList.add('hidden');
+                extraCheckboxContainer.querySelector('input').checked = false;
             }
         }
 
-        /**
-         * Fetches the entire invoice configuration from your backend.
-         * @returns {Promise<Object>} - A promise that resolves with the configuration data.
-         */
-        async function fetchConfig() {
-            console.log("Fetching invoice configuration from backend...");
+        // --- API & LOGIC FUNCTIONS ---
+        async function handleDateChange() {
+            const isNight = bookingState.bookingType === 'night';
+            const checkin = isNight ? document.getElementById('checkin').value : document.getElementById('day-stay-date').value;
+            const checkout = isNight ? document.getElementById('checkout').value : checkin;
+
+            if (isNight && checkin) {
+                 const nextDay = new Date(checkin);
+                 nextDay.setDate(nextDay.getDate() + 1);
+                 document.getElementById('checkout').setAttribute('min', nextDay.toISOString().split('T')[0]);
+            }
+            
+            if (!checkin || (isNight && !checkout)) return;
+            if (isNight && new Date(checkout) <= new Date(checkin)) return;
+
+            bookingState.checkinDate = checkin;
+            bookingState.checkoutDate = checkout;
+
             try {
-                const response = await fetch(`${API_BASE_URL}/api/config`);
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to fetch configuration.');
+                // REAL API CALL
+                const response = await fetch(`${API_BASE_URL}/api/availability?checkin=${checkin}&checkout=${checkout}`);
+                if (!response.ok) throw new Error('Could not check availability.');
+                
+                const availabilityData = await response.json(); // e.g., { deluxe: 3, standard: 2 }
+                bookingState.availability = availabilityData;
+
+                for (const type in availabilityData) {
+                    updateAvailabilityUI(type, availabilityData[type]);
                 }
-                const data = await response.json();
-                console.log("Fetched config data:", data);
-                return data;
+
             } catch (error) {
-                console.error("Error fetching config:", error);
-                throw new Error(`Unable to load configuration: ${error.message}`);
+                showAlert(error.message, 'error');
+                for (const type in ROOM_CONFIG[bookingState.bookingType]) {
+                    updateAvailabilityUI(type, 0, true);
+                }
             }
         }
-
-        // --- INVOICE LOGIC ---
-        function initializeInvoice() {
-            // Populate header and guest details using fetched config and booking data
-            document.getElementById('guest-house-name').textContent = invoiceConfig.guestHouse.name;
-            document.getElementById('guest-house-address').textContent = invoiceConfig.guestHouse.address;
-            document.getElementById('guest-house-gstin').textContent = invoiceConfig.guestHouse.gstin;
-
-            document.getElementById('invoice-number').textContent = `INV-${currentBooking.bookingId.substring(0, 8).toUpperCase()}`; // Shorten for display
-            document.getElementById('invoice-date').textContent = new Date().toLocaleDateString('en-GB');
-            document.getElementById('guest-name').textContent = currentBooking.guest.name;
-            document.getElementById('guest-address').textContent = `${currentBooking.guest.address}, ${currentBooking.guest.city}, ${currentBooking.guest.pincode}`;
-            document.getElementById('guest-email').textContent = currentBooking.guest.email;
-            document.getElementById('guest-phone').textContent = currentBooking.guest.phone;
-            document.getElementById('booking-id').textContent = currentBooking.bookingId;
-            document.getElementById('checkin-date').textContent = new Date(currentBooking.checkin).toLocaleDateString('en-GB');
-            document.getElementById('checkout-date').textContent = new Date(currentBooking.checkout).toLocaleDateString('en-GB');
-
-            // Add room charges as the initial invoice item
-            // Assuming currentBooking.rooms is an array of objects like { type: 'deluxe', price: 1499, quantity: 1 }
-            currentBooking.rooms.forEach(room => {
-                if (room.quantity && room.quantity > 0) {
-                    invoiceItems.push({
-                        description: `${room.quantity > 1 ? room.quantity + ' x ' : ''}${room.type.charAt(0).toUpperCase() + room.type.slice(1)} Room Stay`,
-                        hsnSac: '996311', // SAC code for accommodation services
-                        quantity: currentBooking.duration, // Number of nights
-                        rate: room.price, // Price per room per night (assuming this is how it's stored)
-                        isService: false
-                    });
-                }
-            });
-            calculateAndRender();
-        }
-
-        function addServiceToInvoice() {
-            const serviceId = document.getElementById('service-select').value;
-            const quantity = parseInt(document.getElementById('service-quantity').value);
-            if (!serviceId || !quantity || quantity < 1) {
-                alert('Please select a service and enter a valid quantity.'); // Using alert for simplicity, replace with custom modal
+        
+        function updateAvailabilityUI(type, availableCount, isError = false) {
+            const availabilityInfo = document.getElementById(`availability-${type}`);
+            const controlsContainer = document.getElementById(`controls-${type}`);
+            const quantityInput = document.getElementById(`quantity-${type}`);
+            
+            if (isError) {
+                availabilityInfo.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i> Could not check availability.`;
+                availabilityInfo.className = 'availability-info unavailable';
+                controlsContainer.classList.add('hidden');
                 return;
             }
 
-            const service = availableServices.find(s => s.id == serviceId);
-            if (service) {
-                invoiceItems.push({
-                    description: service.name,
-                    hsnSac: service.sac,
-                    quantity: quantity,
-                    rate: service.charge,
-                    isService: true
+            bookingState.availability[type] = availableCount;
+            if (availableCount > 0) {
+                availabilityInfo.innerHTML = `<i class="fas fa-check-circle mr-2"></i> ${availableCount} rooms available`;
+                availabilityInfo.className = 'availability-info';
+                quantityInput.max = availableCount;
+                controlsContainer.classList.remove('hidden');
+            } else {
+                availabilityInfo.innerHTML = `<i class="fas fa-times-circle mr-2"></i> No rooms available for the selected dates.`;
+                availabilityInfo.className = 'availability-info unavailable';
+                controlsContainer.classList.add('hidden');
+            }
+            availabilityInfo.classList.remove('hidden');
+        }
+
+        async function initiateBooking() {
+            const btn = document.getElementById('confirm-booking-btn');
+            const btnText = document.getElementById('confirm-booking-btn-text');
+            btn.disabled = true;
+            btnText.textContent = 'Processing...';
+
+            try {
+                // REAL API CALL to create booking and get Razorpay order
+                const response = await fetch(`${API_BASE_URL}/api/bookings/initiate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bookingState)
                 });
-                calculateAndRender();
-            } else {
-                alert('Selected service not found.'); // Using alert for simplicity, replace with custom modal
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Booking initiation failed.');
+
+                bookingState.bookingId = result.bookingId;
+                
+                // If there's an amount to pay (advance or full), open Razorpay
+                if (bookingState.payment.amountToPay > 0) {
+                    const options = {
+                        key: RAZORPAY_KEY,
+                        amount: result.amount, // Amount in paise from backend
+                        currency: result.currency,
+                        name: "Toosonj Guest House",
+                        description: `Booking ID: ${result.bookingId}`,
+                        order_id: result.razorpayOrderId,
+                        handler: async function (response) {
+                            // Payment successful, now verify with backend
+                            await verifyPayment(response);
+                        },
+                        prefill: {
+                            email: bookingState.guest.email,
+                            contact: `+91${bookingState.guest.phone}`
+                        },
+                        theme: { color: "#d4af37" }
+                    };
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+                } else {
+                    // No advance payment needed, booking is confirmed directly
+                    showSuccessScreen(bookingState.bookingId);
+                }
+
+            } catch (error) {
+                showAlert(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Proceed to Pay';
             }
-        }
-
-        function calculateAndRender() {
-            let subtotal = 0;
-            const itemsTbody = document.getElementById('invoice-items');
-            itemsTbody.innerHTML = '';
-
-            invoiceItems.forEach(item => {
-                const amount = item.rate * item.quantity;
-                subtotal += amount;
-                const row = `
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-4 text-gray-800">${item.description}</td>
-                        <td class="p-4 text-gray-600">${item.hsnSac}</td>
-                        <td class="p-4 text-right text-gray-800">${item.quantity} ${item.isService ? 'unit(s)' : 'night(s)'}</td>
-                        <td class="p-4 text-right text-gray-800">₹${item.rate.toFixed(2)}</td>
-                        <td class="p-4 text-right font-semibold text-gray-900">₹${amount.toFixed(2)}</td>
-                    </tr>
-                `;
-                itemsTbody.innerHTML += row;
-            });
-
-            document.getElementById('subtotal').textContent = `₹${subtotal.toFixed(2)}`;
-
-            // GST Calculation using fetched config
-            const gstDetailsDiv = document.getElementById('gst-details');
-            let totalGST = 0;
-            gstDetailsDiv.innerHTML = '';
-
-            const GUEST_HOUSE_STATE = invoiceConfig.guestHouse.state;
-            const GST_RATES = invoiceConfig.gstRates;
-
-            if (currentBooking.guest.state.toLowerCase() === GUEST_HOUSE_STATE.toLowerCase()) {
-                const cgst = subtotal * (GST_RATES.cgst / 100);
-                const sgst = subtotal * (GST_RATES.sgst / 100);
-                totalGST = cgst + sgst;
-                gstDetailsDiv.innerHTML = `
-                    <div class="flex justify-between py-2"><span class="text-gray-600">CGST @ ${GST_RATES.cgst}%</span><span>₹${cgst.toFixed(2)}</span></div>
-                    <div class="flex justify-between py-2"><span class="text-gray-600">SGST @ ${GST_RATES.sgst}%</span><span>₹${sgst.toFixed(2)}</span></div>
-                `;
-            } else {
-                const igst = subtotal * (GST_RATES.igst / 100);
-                totalGST = igst;
-                 gstDetailsDiv.innerHTML = `<div class="flex justify-between py-2"><span class="text-gray-600">IGST @ ${GST_RATES.igst}%</span><span>₹${igst.toFixed(2)}</span></div>`;
-            }
-
-            const grandTotal = subtotal + totalGST;
-            // Ensure currentBooking.payment and currentBooking.payment.amountPaid exist
-            const advancePaid = currentBooking.payment && currentBooking.payment.amountPaid ? currentBooking.payment.amountPaid : 0;
-            const balanceDue = grandTotal - advancePaid;
-
-            document.getElementById('grand-total').textContent = `₹${grandTotal.toFixed(2)}`;
-            document.getElementById('advance-paid').textContent = `- ₹${advancePaid.toFixed(2)}`;
-            const balanceDueElement = document.getElementById('balance-due');
-            balanceDueElement.textContent = `₹${balanceDue.toFixed(2)}`;
-            balanceDueElement.classList.remove('text-green-600', 'text-red-600');
-            if (balanceDue > 0) { // If balance is positive, it's due
-                balanceDueElement.classList.add('text-red-600');
-            } else { // If balance is zero or negative (overpaid)
-                balanceDueElement.classList.add('text-green-600');
-            }
-        }
-
-        function generatePDF() {
-            const element = document.getElementById('invoice-to-print');
-            const opt = {
-                margin:       0.5,
-                filename:     `Invoice-${currentBooking.bookingId}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, logging: false, useCORS: true },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-            html2pdf().from(element).set(opt).save();
-        }
-
-        // --- UI HELPER FUNCTIONS ---
-        function populateServiceDropdown() {
-            const select = document.getElementById('service-select');
-            select.innerHTML = '<option value="">Select a service...</option>';
-            availableServices.forEach(s => {
-                select.innerHTML += `<option value="${s.id}">${s.name} (₹${s.charge.toFixed(2)})</option>`;
-            });
         }
         
-        function showError(message) {
-            document.getElementById('loading-container').classList.add('hidden');
-            document.getElementById('main-content').classList.add('hidden');
-            const errorContainer = document.getElementById('error-container');
-            document.getElementById('error-message').textContent = message;
-            errorContainer.classList.remove('hidden');
+        async function verifyPayment(paymentResponse) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/bookings/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        razorpay_order_id: paymentResponse.razorpay_order_id,
+                        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                        razorpay_signature: paymentResponse.razorpay_signature,
+                        bookingId: bookingState.bookingId
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Payment verification failed.');
+
+                showSuccessScreen(bookingState.bookingId);
+
+            } catch (error) {
+                showAlert(`Payment failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // --- NAVIGATION & VALIDATION ---
+        function nextStep(currentStep) {
+            if (!validateStep(currentStep)) return;
+            // Navigation logic...
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('completed');
+            document.querySelector(`.step[data-step="${currentStep + 1}"]`).classList.add('active');
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`step${currentStep + 1}`).classList.add('active');
+
+            if (currentStep === 2) updateBookingSummary();
+        }
+        function prevStep(currentStep) {
+            // Navigation logic...
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('completed');
+            document.querySelector(`.step[data-step="${currentStep - 1}"]`).classList.add('active');
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`step${currentStep - 1}`).classList.add('active');
         }
 
-        function showMainContent() {
+        function validateStep(step) {
+            switch (step) {
+                case 1:
+                    bookingState.rooms = []; // Reset rooms before validation
+                    const config = ROOM_CONFIG[bookingState.bookingType];
+                    let totalRoomsSelected = 0;
+                    for (const type in config) {
+                        const quantity = parseInt(document.getElementById(`quantity-${type}`).value) || 0;
+                        if(quantity > 0) {
+                            totalRoomsSelected += quantity;
+                            if (bookingState.bookingType === 'night') {
+                                for (let i = 0; i < quantity; i++) {
+                                    const occupancy = document.querySelector(`#occupancy-options-${type} select[data-room-index='${i}']`).value;
+                                    const hasExtra = document.querySelector(`#occupancy-options-${type} input[data-extra-index='${i}']`).checked;
+                                    bookingState.rooms.push({ type, occupancy, hasExtra });
+                                }
+                            } else {
+                                for (let i = 0; i < quantity; i++) {
+                                    bookingState.rooms.push({ type });
+                                }
+                            }
+                        }
+                    }
+                    if (totalRoomsSelected === 0) {
+                        showAlert('Please select at least one room.', 'error');
+                        return false;
+                    }
+                    return true;
+                case 2:
+                    const email = document.getElementById('guest_email').value.trim();
+                    const phone = document.getElementById('guest_phone').value.trim();
+                    if (!/^\S+@\S+\.\S+$/.test(email)) {
+                        showAlert('Please enter a valid email address.', 'error');
+                        return false;
+                    }
+                    if (!/^\d{10}$/.test(phone)) {
+                        showAlert('Please enter a valid 10-digit phone number.', 'error');
+                        return false;
+                    }
+                    bookingState.guest = { email, phone };
+                    return true;
+                case 3: return true;
+            }
+        }
+
+        // --- SUMMARY & PAYMENT ---
+        function updateBookingSummary() {
+            const isNight = bookingState.bookingType === 'night';
+            const checkin = new Date(bookingState.checkinDate);
+            const checkout = new Date(bookingState.checkoutDate);
+            bookingState.duration = isNight ? Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24)) : 1;
+
+            let total = 0;
+            let summaryHTML = `
+                <div class="summary-row"><span>Booking Type:</span> <strong>${isNight ? 'Night Stay' : 'Day Stay'}</strong></div>
+                <div class="summary-row"><span>Date:</span> <strong>${formatDate(checkin)}${isNight ? ' to ' + formatDate(checkout) : ''}</strong></div>
+                ${isNight ? `<div class="summary-row"><span>Duration:</span> <strong>${bookingState.duration} nights</strong></div>` : ''}
+                <div class="summary-row"><span>Guest:</span> <strong>${bookingState.guest.email}</strong></div>
+                <hr class="my-4">
+            `;
+
+            bookingState.rooms.forEach((room, i) => {
+                const config = ROOM_CONFIG[bookingState.bookingType][room.type];
+                let roomPrice = 0;
+                let description = `Room ${i + 1}: ${config.name}`;
+
+                if (isNight) {
+                    roomPrice = config.occupancies[room.occupancy];
+                    description += ` (${room.occupancy})`;
+                    if (room.hasExtra) {
+                        roomPrice += config.extra;
+                        description += ' + Extra';
+                    }
+                } else {
+                    roomPrice = config.price;
+                }
+                const roomTotal = roomPrice * bookingState.duration;
+                total += roomTotal;
+                summaryHTML += `<div class="summary-row"><span>${description}</span><strong>₹${roomTotal.toLocaleString()}</strong></div>`;
+            });
+            
+            bookingState.payment.totalAmount = total;
+            summaryHTML += `<div class="summary-row summary-total"><span>Total Amount:</span><span>₹${total.toLocaleString()}</span></div>`;
+            document.getElementById('booking-summary').innerHTML = summaryHTML;
+        }
+        
+        function selectPaymentMethod(method) {
+            bookingState.payment.method = method;
+            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+            document.getElementById(`pay-${method.toLowerCase()}-option`).classList.add('selected');
+
+            let amountToPay = 0;
+            let detailsHTML = '';
+
+            if (method === 'UPI') {
+                amountToPay = bookingState.payment.totalAmount;
+                detailsHTML = `<p class="text-center">You will pay the full amount of <strong>₹${amountToPay.toLocaleString()}</strong> online.</p>`;
+            } else { // CASH (Pay at Arrival)
+                amountToPay = Math.round(bookingState.payment.totalAmount * 0.30);
+                detailsHTML = `
+                    <p class="text-center">To confirm, pay a 30% advance of <strong>₹${amountToPay.toLocaleString()}</strong> now.</p>
+                    <p class="text-center text-sm text-gray-500 mt-2">Remaining balance of ₹${(bookingState.payment.totalAmount - amountToPay).toLocaleString()} is due at arrival.</p>
+                `;
+            }
+            
+            bookingState.payment.amountToPay = amountToPay;
+            const paymentDetails = document.getElementById('payment-details');
+            paymentDetails.innerHTML = detailsHTML;
+            paymentDetails.classList.remove('hidden');
+            document.getElementById('confirm-booking-btn').classList.remove('hidden');
+        }
+
+        // --- UTILITY FUNCTIONS ---
+        function showSuccessScreen(bookingId) {
+            document.getElementById('payment-selection').classList.add('hidden');
             document.getElementById('loading-container').classList.add('hidden');
-            document.getElementById('error-container').classList.add('hidden');
-            document.getElementById('main-content').classList.remove('hidden');
+            document.getElementById('booking-id').textContent = bookingId;
+            document.getElementById('success-container').classList.remove('hidden');
+        }
+        function formatDate(date) { return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+        function showAlert(message, type = 'error') {
+            const alertBox = document.getElementById('alert-box');
+            alertBox.textContent = message;
+            alertBox.className = 'alert-box';
+            alertBox.classList.add(type);
+            alertBox.style.display = 'block';
+            setTimeout(() => { alertBox.style.display = 'none'; }, 5000);
         }
     </script>
 </body>
