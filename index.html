@@ -141,9 +141,9 @@
                 <!-- Invoice Header -->
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 pb-4 border-b border-gray-200">
                     <div class="mb-6 md:mb-0">
-                        <h1 class="text-4xl font-extrabold text-gray-900 leading-tight">Toosonj Guest House</h1>
-                        <p class="text-gray-600 mt-1 text-md">Kinaram Mikir Path, VIP Road, Guwahati, Assam</p>
-                        <p class="text-gray-600 text-md">GSTIN: <span id="guest-house-gstin" class="font-semibold text-gray-700">22AAAAA0000A1Z5</span></p>
+                        <h1 class="text-4xl font-extrabold text-gray-900 leading-tight" id="guest-house-name"></h1>
+                        <p class="text-gray-600 mt-1 text-md" id="guest-house-address"></p>
+                        <p class="text-gray-600 text-md">GSTIN: <span id="guest-house-gstin" class="font-semibold text-gray-700"></span></p>
                     </div>
                     <div class="text-left md:text-right">
                         <h2 class="text-3xl font-bold text-gray-800 mb-2">TAX INVOICE</h2>
@@ -237,116 +237,119 @@
         </div>
     </div>
 
-    <script>
+   <script>
         // --- GLOBAL STATE & CONFIG ---
-        let currentBooking = null; // Stores the fetched booking details
-        let availableServices = []; // Stores the list of services available
-        let invoiceItems = []; // Array to hold all items on the invoice (rooms + services)
-        const GUEST_HOUSE_STATE = "Assam"; // Your business state for GST calculation (important for IGST/CGST+SGST)
-        const GST_RATES = { cgst: 9, sgst: 9, igst: 18 }; // Standard GST rates
+        let currentBooking = null;
+        let availableServices = [];
+        let invoiceItems = [];
+        let invoiceConfig = null; // Will store the fetched configuration
+
+        // IMPORTANT: When deploying your backend, replace 'http://localhost:3000'
+        // with your deployed backend's URL (e.g., 'https://your-backend-api.render.com')
+        const API_BASE_URL = 'http://localhost:3000'; 
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', async () => {
-            // Get the 'token' from the URL query parameters
             const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
+            const bookingIdFromUrl = urlParams.get('bookingId'); // Use 'bookingId' as the parameter name
 
-            // If no token is provided, show an error message
-            if (!token) {
-                showError("No booking token provided. Please ensure you are using the correct link from your confirmation email.");
+            if (!bookingIdFromUrl) {
+                showError("No booking ID provided. Please use the link with a valid booking ID.");
                 return;
             }
             
-            // In a real production application, these would be separate asynchronous API calls
-            // to your backend server to fetch data from a database.
-            // We are mocking them here with a delay to simulate network latency.
-            const bookingPromise = mockFetchBooking(token);
-            const servicesPromise = mockFetchServices();
+            // Fetch configuration and booking details in parallel
+            const configPromise = fetchConfig();
+            const bookingPromise = fetchBooking(bookingIdFromUrl);
 
             try {
-                // Wait for both booking and services data to be fetched concurrently
-                [currentBooking, availableServices] = await Promise.all([bookingPromise, servicesPromise]);
-                
-                // Populate the dropdown for adding new services
+                [invoiceConfig, currentBooking] = await Promise.all([configPromise, bookingPromise]);
+                availableServices = invoiceConfig.services; // Get services from fetched config
+
                 populateServiceDropdown();
-                // Initialize the invoice with booking details and calculate totals
                 initializeInvoice();
-                // Hide loading and show the main content
                 showMainContent();
             } catch (error) {
-                // Catch any errors during data fetching and display them
-                showError(`Failed to load data: ${error.message}. Please try again later.`);
+                showError(error.message);
             }
         });
 
-        // --- MOCK API CALLS (***REPLACE THESE WITH REAL FETCH CALLS TO YOUR BACKEND***) ---
+        // --- REAL API CALLS ---
         /**
-         * Mocks fetching booking details from a backend.
-         * In a real application, this would be a `fetch` call to your API endpoint.
-         * @param {string} token - The booking token to identify the booking.
-         * @returns {Promise<Object>} - A promise that resolves with mock booking data.
+         * Fetches real booking details from your backend.
+         * @param {string} bookingId - The booking ID to fetch.
+         * @returns {Promise<Object>} - A promise that resolves with real booking data.
          */
-        async function mockFetchBooking(token) {
-            console.log(`Simulating fetching booking with token: ${token}`);
-            // Simulate network delay
-            await new Promise(r => setTimeout(r, 1500)); // Increased delay for better loading visualization
-            
-            // This is static mock data. In a real scenario, your backend would query a database
-            // (e.g., Firestore, PostgreSQL, MongoDB) using the token to retrieve actual booking information.
-            return {
-                bookingId: `TGH-${token.slice(0, 6).toUpperCase()}`, // Example: TGH-ABCDEF
-                checkin: "2025-08-10",
-                checkout: "2025-08-12",
-                duration: 2, // Calculated from checkin/checkout dates in a real system
-                guest: {
-                    name: "Aarav Sharma",
-                    email: "aarav.sharma@example.com",
-                    phone: "+91 98765 43210",
-                    address: "123, MG Road, Bandra",
-                    city: "Mumbai",
-                    state: "Maharashtra", // Crucial for GST calculation
-                    pincode: "400050"
-                },
-                rooms: {
-                    deluxe: { quantity: 1, price: 1499 }, // Price per night
-                    standard: { quantity: 0, price: 1099 }
-                },
-                payment: {
-                    amountPaid: 699 // Advance paid by the guest
+        async function fetchBooking(bookingId) {
+            console.log(`Fetching booking with ID: ${bookingId} from backend...`);
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Failed to fetch booking details for ID: ${bookingId}`);
                 }
-            };
+                const data = await response.json();
+                console.log("Fetched booking data:", data);
+
+                // Adapt the backend response structure to fit the frontend's expected format
+                // Ensure guest properties are available, provide defaults if not
+                const guestData = data.guest || {};
+                const paymentData = data.payment || { amountPaid: 0 };
+
+                return {
+                    bookingId: data.id, 
+                    checkin: data.checkinDate,
+                    checkout: data.checkoutDate,
+                    duration: (new Date(data.checkoutDate) - new Date(data.checkinDate)) / (1000 * 60 * 60 * 24),
+                    guest: {
+                        name: guestData.name || 'N/A',
+                        email: guestData.email || 'N/A',
+                        phone: guestData.phone || 'N/A',
+                        address: guestData.address || 'N/A',
+                        city: guestData.city || 'N/A',
+                        state: guestData.state || 'N/A',
+                        pincode: guestData.pincode || 'N/A'
+                    },
+                    rooms: data.rooms || [], // Ensure rooms is an array, provide default if not
+                    payment: paymentData
+                };
+
+            } catch (error) {
+                console.error("Error fetching booking:", error);
+                throw new Error(`Unable to load booking details: ${error.message}`);
+            }
         }
 
         /**
-         * Mocks fetching available services from a backend.
-         * In a real application, this would be a `fetch` call to your API endpoint.
-         * @returns {Promise<Array<Object>>} - A promise that resolves with mock services data.
+         * Fetches the entire invoice configuration from your backend.
+         * @returns {Promise<Object>} - A promise that resolves with the configuration data.
          */
-        async function mockFetchServices() {
-            console.log("Simulating fetching available services...");
-            // Simulate network delay
-            await new Promise(r => setTimeout(r, 800));
-            
-            // This is static mock data. In a real scenario, your backend would fetch this
-            // from a services catalog in your database.
-            return [
-                { id: 1, name: 'Laundry Service (Per Load)', charge: 250, sac: '998511' },
-                { id: 2, name: 'Extra Meal (Lunch/Dinner)', charge: 350, sac: '996331' },
-                { id: 3, name: 'Airport Transfer (One Way)', charge: 800, sac: '996411' },
-                { id: 4, name: 'Local Sightseeing Tour', charge: 1200, sac: '998599' },
-                { id: 5, name: 'Late Check-out (Per Hour)', charge: 150, sac: '996311' }
-            ];
+        async function fetchConfig() {
+            console.log("Fetching invoice configuration from backend...");
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/config`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to fetch configuration.');
+                }
+                const data = await response.json();
+                console.log("Fetched config data:", data);
+                return data;
+            } catch (error) {
+                console.error("Error fetching config:", error);
+                throw new Error(`Unable to load configuration: ${error.message}`);
+            }
         }
 
         // --- INVOICE LOGIC ---
-        /**
-         * Initializes the invoice by populating header details, guest information,
-         * and adding room charges as the initial invoice items.
-         */
         function initializeInvoice() {
-            // Populate static header and guest details from the fetched booking
-            document.getElementById('invoice-number').textContent = `INV-${currentBooking.bookingId}`;
-            document.getElementById('invoice-date').textContent = new Date().toLocaleDateString('en-GB'); // Format: DD/MM/YYYY
+            // Populate header and guest details using fetched config and booking data
+            document.getElementById('guest-house-name').textContent = invoiceConfig.guestHouse.name;
+            document.getElementById('guest-house-address').textContent = invoiceConfig.guestHouse.address;
+            document.getElementById('guest-house-gstin').textContent = invoiceConfig.guestHouse.gstin;
+
+            document.getElementById('invoice-number').textContent = `INV-${currentBooking.bookingId.substring(0, 8).toUpperCase()}`; // Shorten for display
+            document.getElementById('invoice-date').textContent = new Date().toLocaleDateString('en-GB');
             document.getElementById('guest-name').textContent = currentBooking.guest.name;
             document.getElementById('guest-address').textContent = `${currentBooking.guest.address}, ${currentBooking.guest.city}, ${currentBooking.guest.pincode}`;
             document.getElementById('guest-email').textContent = currentBooking.guest.email;
@@ -355,34 +358,27 @@
             document.getElementById('checkin-date').textContent = new Date(currentBooking.checkin).toLocaleDateString('en-GB');
             document.getElementById('checkout-date').textContent = new Date(currentBooking.checkout).toLocaleDateString('en-GB');
 
-            // Add room charges as the initial items to the invoiceItems array
-            for (const type in currentBooking.rooms) {
-                const room = currentBooking.rooms[type];
-                if (room.quantity > 0) {
+            // Add room charges as the initial invoice item
+            // Assuming currentBooking.rooms is an array of objects like { type: 'deluxe', price: 1499, quantity: 1 }
+            currentBooking.rooms.forEach(room => {
+                if (room.quantity && room.quantity > 0) {
                     invoiceItems.push({
-                        description: `${room.quantity > 1 ? room.quantity + ' x ' : ''}${type.charAt(0).toUpperCase() + type.slice(1)} Room Stay`,
-                        hsnSac: '996311', // HSN/SAC code for Accommodation services
+                        description: `${room.quantity > 1 ? room.quantity + ' x ' : ''}${room.type.charAt(0).toUpperCase() + room.type.slice(1)} Room Stay`,
+                        hsnSac: '996311', // SAC code for accommodation services
                         quantity: currentBooking.duration, // Number of nights
-                        rate: room.price * room.quantity, // Total rate for all rooms of this type per night
-                        isService: false // Flag to differentiate room charges from other services
+                        rate: room.price, // Price per room per night (assuming this is how it's stored)
+                        isService: false
                     });
                 }
-            }
-            // Recalculate and render all invoice details
+            });
             calculateAndRender();
         }
 
-        /**
-         * Adds a selected service to the invoice items list and re-renders the invoice.
-         */
         function addServiceToInvoice() {
             const serviceId = document.getElementById('service-select').value;
-            const quantityInput = document.getElementById('service-quantity');
-            const quantity = parseInt(quantityInput.value);
-
-            // Basic validation
-            if (!serviceId || isNaN(quantity) || quantity < 1) {
-                alert("Please select a service and enter a valid quantity."); // Using alert for simplicity, but a custom modal is better
+            const quantity = parseInt(document.getElementById('service-quantity').value);
+            if (!serviceId || !quantity || quantity < 1) {
+                alert('Please select a service and enter a valid quantity.'); // Using alert for simplicity, replace with custom modal
                 return;
             }
 
@@ -395,28 +391,20 @@
                     rate: service.charge,
                     isService: true
                 });
-                // Reset quantity input after adding
-                quantityInput.value = 1;
-                // Recalculate and render the invoice
                 calculateAndRender();
             } else {
-                alert("Selected service not found."); // Using alert for simplicity
+                alert('Selected service not found.'); // Using alert for simplicity, replace with custom modal
             }
         }
 
-        /**
-         * Calculates all totals (subtotal, GST, grand total, balance due)
-         * and renders them in the invoice table and summary sections.
-         */
         function calculateAndRender() {
             let subtotal = 0;
             const itemsTbody = document.getElementById('invoice-items');
-            itemsTbody.innerHTML = ''; // Clear previous items
+            itemsTbody.innerHTML = '';
 
-            // Iterate through invoice items, calculate amounts, and render table rows
             invoiceItems.forEach(item => {
                 const amount = item.rate * item.quantity;
-                subtotal += amount; // Accumulate subtotal
+                subtotal += amount;
                 const row = `
                     <tr class="hover:bg-gray-50">
                         <td class="p-4 text-gray-800">${item.description}</td>
@@ -431,77 +419,66 @@
 
             document.getElementById('subtotal').textContent = `₹${subtotal.toFixed(2)}`;
 
-            // GST Calculation Logic based on guest's state vs. guest house state
+            // GST Calculation using fetched config
             const gstDetailsDiv = document.getElementById('gst-details');
             let totalGST = 0;
-            gstDetailsDiv.innerHTML = ''; // Clear previous GST details
+            gstDetailsDiv.innerHTML = '';
 
-            // Check if guest's state is the same as the guest house's state (Intra-state supply)
+            const GUEST_HOUSE_STATE = invoiceConfig.guestHouse.state;
+            const GST_RATES = invoiceConfig.gstRates;
+
             if (currentBooking.guest.state.toLowerCase() === GUEST_HOUSE_STATE.toLowerCase()) {
                 const cgst = subtotal * (GST_RATES.cgst / 100);
                 const sgst = subtotal * (GST_RATES.sgst / 100);
                 totalGST = cgst + sgst;
                 gstDetailsDiv.innerHTML = `
-                    <div class="flex justify-between py-2 text-gray-600"><span class="font-medium">CGST @ ${GST_RATES.cgst}%</span><span>₹${cgst.toFixed(2)}</span></div>
-                    <div class="flex justify-between py-2 text-gray-600"><span class="font-medium">SGST @ ${GST_RATES.sgst}%</span><span>₹${sgst.toFixed(2)}</span></div>
+                    <div class="flex justify-between py-2"><span class="text-gray-600">CGST @ ${GST_RATES.cgst}%</span><span>₹${cgst.toFixed(2)}</span></div>
+                    <div class="flex justify-between py-2"><span class="text-gray-600">SGST @ ${GST_RATES.sgst}%</span><span>₹${sgst.toFixed(2)}</span></div>
                 `;
             } else {
-                // Inter-state supply
                 const igst = subtotal * (GST_RATES.igst / 100);
                 totalGST = igst;
-                gstDetailsDiv.innerHTML = `<div class="flex justify-between py-2 text-gray-600"><span class="font-medium">IGST @ ${GST_RATES.igst}%</span><span>₹${igst.toFixed(2)}</span></div>`;
+                 gstDetailsDiv.innerHTML = `<div class="flex justify-between py-2"><span class="text-gray-600">IGST @ ${GST_RATES.igst}%</span><span>₹${igst.toFixed(2)}</span></div>`;
             }
 
             const grandTotal = subtotal + totalGST;
-            const advancePaid = currentBooking.payment.amountPaid;
+            // Ensure currentBooking.payment and currentBooking.payment.amountPaid exist
+            const advancePaid = currentBooking.payment && currentBooking.payment.amountPaid ? currentBooking.payment.amountPaid : 0;
             const balanceDue = grandTotal - advancePaid;
 
-            // Update final total summary
             document.getElementById('grand-total').textContent = `₹${grandTotal.toFixed(2)}`;
             document.getElementById('advance-paid').textContent = `- ₹${advancePaid.toFixed(2)}`;
-            // Apply color based on balance due (green for positive, red for negative/due)
             const balanceDueElement = document.getElementById('balance-due');
             balanceDueElement.textContent = `₹${balanceDue.toFixed(2)}`;
-            balanceDueElement.classList.remove('text-green-600', 'text-red-600'); // Clear previous classes
-            if (balanceDue >= 0) {
-                balanceDueElement.classList.add('text-red-600'); // Still due, or zero
-            } else {
-                balanceDueElement.classList.add('text-green-600'); // Overpaid or credit
+            balanceDueElement.classList.remove('text-green-600', 'text-red-600');
+            if (balanceDue > 0) { // If balance is positive, it's due
+                balanceDueElement.classList.add('text-red-600');
+            } else { // If balance is zero or negative (overpaid)
+                balanceDueElement.classList.add('text-green-600');
             }
         }
 
-        /**
-         * Generates a PDF of the invoice content using html2pdf.js.
-         */
         function generatePDF() {
             const element = document.getElementById('invoice-to-print');
             const opt = {
-                margin:       0.5, // Margin around the PDF content
-                filename:     `Invoice-${currentBooking.bookingId}.pdf`, // Dynamic filename
-                image:        { type: 'jpeg', quality: 0.98 }, // Image quality for canvas rendering
-                html2canvas:  { scale: 2, logging: false, useCORS: true }, // Scale for better resolution, disable logging
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' } // PDF format and orientation
+                margin:       0.5,
+                filename:     `Invoice-${currentBooking.bookingId}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, logging: false, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
-            // Use html2pdf to generate and save the PDF
             html2pdf().from(element).set(opt).save();
         }
 
         // --- UI HELPER FUNCTIONS ---
-        /**
-         * Populates the service selection dropdown with available services.
-         */
         function populateServiceDropdown() {
             const select = document.getElementById('service-select');
-            select.innerHTML = '<option value="">Select a service...</option>'; // Default option
+            select.innerHTML = '<option value="">Select a service...</option>';
             availableServices.forEach(s => {
                 select.innerHTML += `<option value="${s.id}">${s.name} (₹${s.charge.toFixed(2)})</option>`;
             });
         }
         
-        /**
-         * Displays the error container and hides loading/main content.
-         * @param {string} message - The error message to display.
-         */
         function showError(message) {
             document.getElementById('loading-container').classList.add('hidden');
             document.getElementById('main-content').classList.add('hidden');
@@ -510,9 +487,6 @@
             errorContainer.classList.remove('hidden');
         }
 
-        /**
-         * Hides the loading and error containers and displays the main content.
-         */
         function showMainContent() {
             document.getElementById('loading-container').classList.add('hidden');
             document.getElementById('error-container').classList.add('hidden');
