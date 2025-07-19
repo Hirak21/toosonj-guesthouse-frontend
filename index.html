@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Razorpay SDK for payment processing -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
@@ -50,16 +49,13 @@
                 <div class="step" data-step="4">4</div>
             </div>
 
-            <!-- Step 1: Dates and Room Selection -->
             <div class="form-step active" id="step1">
                 <h3 class="text-xl font-semibold mb-4 text-gray-700">1. Select Booking Type & Dates</h3>
-                 <!-- Booking Type Toggle -->
                 <div class="flex justify-center bg-gray-200 rounded-lg p-1 mb-6">
                     <button id="btn-night-stay" class="flex-1 py-2 px-4 rounded-md bg-yellow-500 text-white font-semibold" onclick="selectBookingType('night')">Night Stay</button>
                     <button id="btn-day-stay" class="flex-1 py-2 px-4 rounded-md text-gray-600 font-semibold" onclick="selectBookingType('day')">Day Stay (6 Hours)</button>
                 </div>
                 
-                <!-- Night Stay Inputs -->
                 <div id="night-stay-inputs">
                     <div class="grid md:grid-cols-2 gap-4 mb-6">
                         <div>
@@ -72,9 +68,8 @@
                         </div>
                     </div>
                 </div>
-                 <!-- Day Stay Inputs -->
                 <div id="day-stay-inputs" class="hidden">
-                     <div class="grid md:grid-cols-1 gap-4 mb-6">
+                    <div class="grid md:grid-cols-1 gap-4 mb-6">
                         <div>
                             <label for="day-stay-date" class="block mb-2 font-medium text-gray-600">Select Date</label>
                             <input type="date" id="day-stay-date" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500">
@@ -85,51 +80,49 @@
                 <hr class="my-6">
                 <h3 class="text-xl font-semibold mb-4 text-gray-700">2. Select Rooms</h3>
 
-                <!-- Room Options Container -->
                 <div id="room-options-container" class="space-y-6">
-                    <!-- This will be populated by JS -->
-                </div>
+                    </div>
 
                 <div class="flex justify-end mt-8">
                     <button type="button" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 transition-colors" onclick="nextStep(1)">Next</button>
                 </div>
             </div>
 
-            <!-- Step 2: Guest Information -->
             <div class="form-step" id="step2">
-                 <h3 class="text-xl font-semibold mb-4 text-gray-700">Guest Information</h3>
-                 <div class="space-y-4">
-                     <div>
-                         <label for="guest_email" class="block mb-2 font-medium text-gray-600">Email Address *</label>
-                         <input type="email" id="guest_email" placeholder="e.g., user@example.com" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500" required>
-                     </div>
-                     <div>
-                         <label for="guest_phone" class="block mb-2 font-medium text-gray-600">Phone Number *</label>
-                         <div class="flex">
-                             <span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">+91</span>
-                             <input type="tel" id="guest_phone" placeholder="e.g., 9876543210" class="w-full p-3 border-2 border-gray-200 rounded-r-lg focus:outline-none focus:border-yellow-500" required>
-                         </div>
-                     </div>
-                 </div>
-                 <div class="flex justify-between mt-8">
-                     <button type="button" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-colors" onclick="prevStep(2)">Previous</button>
-                     <button type="button" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 transition-colors" onclick="nextStep(2)">Next</button>
-                 </div>
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">Guest Information</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="guest_name" class="block mb-2 font-medium text-gray-600">Full Name *</label>
+                        <input type="text" id="guest_name" placeholder="e.g., John Doe" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500" required>
+                    </div>
+                    <div>
+                        <label for="guest_email" class="block mb-2 font-medium text-gray-600">Email Address *</label>
+                        <input type="email" id="guest_email" placeholder="e.g., user@example.com" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-yellow-500" required>
+                    </div>
+                    <div>
+                        <label for="guest_phone" class="block mb-2 font-medium text-gray-600">Phone Number *</label>
+                        <div class="flex">
+                            <span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">+91</span>
+                            <input type="tel" id="guest_phone" placeholder="e.g., 9876543210" class="w-full p-3 border-2 border-gray-200 rounded-r-lg focus:outline-none focus:border-yellow-500" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between mt-8">
+                    <button type="button" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-colors" onclick="prevStep(2)">Previous</button>
+                    <button type="button" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 transition-colors" onclick="nextStep(2)">Next</button>
+                </div>
             </div>
 
-            <!-- Step 3: Booking Summary -->
             <div class="form-step" id="step3">
                 <h3 class="text-xl font-semibold mb-4 text-gray-700">Booking Summary</h3>
                 <div class="booking-summary" id="booking-summary">
-                    <!-- Summary will be injected here by JS -->
-                </div>
+                    </div>
                 <div class="flex justify-between mt-8">
                     <button type="button" class="bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 transition-colors" onclick="prevStep(3)">Previous</button>
                     <button type="button" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-yellow-600 transition-colors" onclick="nextStep(3)">Proceed to Payment</button>
                 </div>
             </div>
 
-            <!-- Step 4: Payment -->
             <div class="form-step" id="step4">
                 <div id="payment-selection">
                     <h3 class="text-xl font-semibold mb-4 text-gray-700">Choose Payment Method</h3>
@@ -194,7 +187,7 @@
                 checkoutDate: null,
                 duration: 0,
                 rooms: [], // Array of selected room objects
-                guest: { email: '', phone: '' },
+                guest: { name: '', email: '', phone: '' }, // Added guest name
                 payment: { method: null, totalAmount: 0, amountToPay: 0 },
                 bookingId: null,
                 availability: {} // Stores available room counts
@@ -213,6 +206,13 @@
             document.getElementById('day-stay-date').addEventListener('change', handleDateChange);
             
             renderRoomOptions();
+            // Initially populate all rooms as available until a booking is made
+            for (const type in ROOM_CONFIG.night) {
+                updateAvailabilityUI(type, ROOM_CONFIG.night[type].totalInventory);
+            }
+            for (const type in ROOM_CONFIG.day) {
+                updateAvailabilityUI(type, ROOM_CONFIG.day[type].totalInventory);
+            }
         });
 
         // --- UI RENDERING & EVENT HANDLING ---
@@ -227,6 +227,10 @@
             document.getElementById('day-stay-inputs').classList.toggle('hidden', type === 'night');
 
             renderRoomOptions();
+            // For testing, rooms are always available until first booking
+            for (const typeKey in ROOM_CONFIG[type]) {
+                updateAvailabilityUI(typeKey, ROOM_CONFIG[type][typeKey].totalInventory);
+            }
             handleDateChange(); // Re-check availability for the new type
         }
 
@@ -251,8 +255,8 @@
                             <div class="font-semibold text-gray-600">Total Rooms: ${room.totalInventory}</div>
                         </div>
                         <p class="text-gray-600 my-2">${priceInfo}</p>
-                        <div id="availability-${type}" class="availability-info hidden"></div>
-                        <div id="controls-${type}" class="mt-4 hidden">
+                        <div id="availability-${type}" class="availability-info"></div>
+                        <div id="controls-${type}" class="mt-4">
                             <label class="font-medium text-gray-600">Number of Rooms:</label>
                             <input type="number" id="quantity-${type}" value="0" min="0" class="w-24 p-2 border-2 rounded-lg ml-2" onchange="handleQuantityChange('${type}')">
                             <div id="occupancy-options-${type}" class="mt-2 space-y-2"></div>
@@ -301,9 +305,7 @@
         }
         
         function updateRoomState(type, index) {
-            // This is a simplified stub. A full implementation would update bookingState.rooms array
-            // based on the selections here. For brevity, the main logic is in validateStep1.
-            const occupancySelect = document.querySelector(`select[data-room-index='${index}']`);
+            const occupancySelect = document.querySelector(`#occupancy-options-${type} select[data-room-index='${index}']`);
             const extraCheckboxContainer = occupancySelect.nextElementSibling;
             if(occupancySelect.value === 'double') {
                 extraCheckboxContainer.classList.remove('hidden');
@@ -321,9 +323,9 @@
             const checkout = isNight ? document.getElementById('checkout').value : checkin;
 
             if (isNight && checkin) {
-                 const nextDay = new Date(checkin);
-                 nextDay.setDate(nextDay.getDate() + 1);
-                 document.getElementById('checkout').setAttribute('min', nextDay.toISOString().split('T')[0]);
+                const nextDay = new Date(checkin);
+                nextDay.setDate(nextDay.getDate() + 1);
+                document.getElementById('checkout').setAttribute('min', nextDay.toISOString().split('T')[0]);
             }
             
             if (!checkin || (isNight && !checkout)) return;
@@ -332,23 +334,9 @@
             bookingState.checkinDate = checkin;
             bookingState.checkoutDate = checkout;
 
-            try {
-                // REAL API CALL
-                const response = await fetch(`${API_BASE_URL}/api/availability?checkin=${checkin}&checkout=${checkout}`);
-                if (!response.ok) throw new Error('Could not check availability.');
-                
-                const availabilityData = await response.json(); // e.g., { deluxe: 3, standard: 2 }
-                bookingState.availability = availabilityData;
-
-                for (const type in availabilityData) {
-                    updateAvailabilityUI(type, availabilityData[type]);
-                }
-
-            } catch (error) {
-                showAlert(error.message, 'error');
-                for (const type in ROOM_CONFIG[bookingState.bookingType]) {
-                    updateAvailabilityUI(type, 0, true);
-                }
+            // For testing, rooms are always available until first book
+            for (const type in ROOM_CONFIG[bookingState.bookingType]) {
+                updateAvailabilityUI(type, ROOM_CONFIG[bookingState.bookingType][type].totalInventory);
             }
         }
         
@@ -378,53 +366,37 @@
             availabilityInfo.classList.remove('hidden');
         }
 
+        function generateBookingId() {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = 'TGH-';
+            for (let i = 0; i < 5; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
         async function initiateBooking() {
             const btn = document.getElementById('confirm-booking-btn');
             const btnText = document.getElementById('confirm-booking-btn-text');
             btn.disabled = true;
             btnText.textContent = 'Processing...';
 
+            document.getElementById('payment-selection').classList.add('hidden');
+            document.getElementById('loading-container').classList.remove('hidden');
+
             try {
-                // REAL API CALL to create booking and get Razorpay order
-                const response = await fetch(`${API_BASE_URL}/api/bookings/initiate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(bookingState)
-                });
-
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message || 'Booking initiation failed.');
-
-                bookingState.bookingId = result.bookingId;
+                // For testing, simulate successful payment and generate booking ID
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call delay
                 
-                // If there's an amount to pay (advance or full), open Razorpay
-                if (bookingState.payment.amountToPay > 0) {
-                    const options = {
-                        key: RAZORPAY_KEY,
-                        amount: result.amount, // Amount in paise from backend
-                        currency: result.currency,
-                        name: "Toosonj Guest House",
-                        description: `Booking ID: ${result.bookingId}`,
-                        order_id: result.razorpayOrderId,
-                        handler: async function (response) {
-                            // Payment successful, now verify with backend
-                            await verifyPayment(response);
-                        },
-                        prefill: {
-                            email: bookingState.guest.email,
-                            contact: `+91${bookingState.guest.phone}`
-                        },
-                        theme: { color: "#d4af37" }
-                    };
-                    const rzp = new Razorpay(options);
-                    rzp.open();
-                } else {
-                    // No advance payment needed, booking is confirmed directly
-                    showSuccessScreen(bookingState.bookingId);
-                }
+                bookingState.bookingId = generateBookingId();
+
+                // Simulate Razorpay success (no actual Razorpay call for testing)
+                showSuccessScreen(bookingState.bookingId);
 
             } catch (error) {
                 showAlert(error.message, 'error');
+                document.getElementById('payment-selection').classList.remove('hidden');
+                document.getElementById('loading-container').classList.add('hidden');
             } finally {
                 btn.disabled = false;
                 btnText.textContent = 'Proceed to Pay';
@@ -432,31 +404,16 @@
         }
         
         async function verifyPayment(paymentResponse) {
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/bookings/verify`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        razorpay_order_id: paymentResponse.razorpay_order_id,
-                        razorpay_payment_id: paymentResponse.razorpay_payment_id,
-                        razorpay_signature: paymentResponse.razorpay_signature,
-                        bookingId: bookingState.bookingId
-                    })
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message || 'Payment verification failed.');
-
-                showSuccessScreen(bookingState.bookingId);
-
-            } catch (error) {
-                showAlert(`Payment failed: ${error.message}`, 'error');
-            }
+            // This function is kept for completeness but won't be called in testing scenario
+            // where initiateBooking directly leads to success.
+            // If actual Razorpay integration is restored, this would handle verification.
+            showSuccessScreen(bookingState.bookingId);
         }
         
         // --- NAVIGATION & VALIDATION ---
         function nextStep(currentStep) {
             if (!validateStep(currentStep)) return;
-            // Navigation logic...
+            
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
             document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('completed');
             document.querySelector(`.step[data-step="${currentStep + 1}"]`).classList.add('active');
@@ -466,7 +423,6 @@
             if (currentStep === 2) updateBookingSummary();
         }
         function prevStep(currentStep) {
-            // Navigation logic...
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
             document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('completed');
             document.querySelector(`.step[data-step="${currentStep - 1}"]`).classList.add('active');
@@ -486,8 +442,12 @@
                             totalRoomsSelected += quantity;
                             if (bookingState.bookingType === 'night') {
                                 for (let i = 0; i < quantity; i++) {
-                                    const occupancy = document.querySelector(`#occupancy-options-${type} select[data-room-index='${i}']`).value;
-                                    const hasExtra = document.querySelector(`#occupancy-options-${type} input[data-extra-index='${i}']`).checked;
+                                    const occupancySelect = document.querySelector(`#occupancy-options-${type} select[data-room-index='${i}']`);
+                                    const hasExtraCheckbox = document.querySelector(`#occupancy-options-${type} input[data-extra-index='${i}']`);
+
+                                    const occupancy = occupancySelect ? occupancySelect.value : 'single'; // Default if not found
+                                    const hasExtra = hasExtraCheckbox ? hasExtraCheckbox.checked : false; // Default if not found
+
                                     bookingState.rooms.push({ type, occupancy, hasExtra });
                                 }
                             } else {
@@ -503,8 +463,14 @@
                     }
                     return true;
                 case 2:
+                    const guestName = document.getElementById('guest_name').value.trim();
                     const email = document.getElementById('guest_email').value.trim();
                     const phone = document.getElementById('guest_phone').value.trim();
+
+                    if (guestName === '') {
+                        showAlert('Please enter your full name.', 'error');
+                        return false;
+                    }
                     if (!/^\S+@\S+\.\S+$/.test(email)) {
                         showAlert('Please enter a valid email address.', 'error');
                         return false;
@@ -513,7 +479,7 @@
                         showAlert('Please enter a valid 10-digit phone number.', 'error');
                         return false;
                     }
-                    bookingState.guest = { email, phone };
+                    bookingState.guest = { name: guestName, email, phone };
                     return true;
                 case 3: return true;
             }
@@ -531,7 +497,9 @@
                 <div class="summary-row"><span>Booking Type:</span> <strong>${isNight ? 'Night Stay' : 'Day Stay'}</strong></div>
                 <div class="summary-row"><span>Date:</span> <strong>${formatDate(checkin)}${isNight ? ' to ' + formatDate(checkout) : ''}</strong></div>
                 ${isNight ? `<div class="summary-row"><span>Duration:</span> <strong>${bookingState.duration} nights</strong></div>` : ''}
-                <div class="summary-row"><span>Guest:</span> <strong>${bookingState.guest.email}</strong></div>
+                <div class="summary-row"><span>Guest Name:</span> <strong>${bookingState.guest.name}</strong></div>
+                <div class="summary-row"><span>Guest Email:</span> <strong>${bookingState.guest.email}</strong></div>
+                <div class="summary-row"><span>Guest Phone:</span> <strong>+91 ${bookingState.guest.phone}</strong></div>
                 <hr class="my-4">
             `;
 
@@ -545,62 +513,90 @@
                     description += ` (${room.occupancy})`;
                     if (room.hasExtra) {
                         roomPrice += config.extra;
-                        description += ' + Extra';
+                        description += ' + Extra Occupant';
                     }
                 } else {
                     roomPrice = config.price;
                 }
                 const roomTotal = roomPrice * bookingState.duration;
                 total += roomTotal;
-                summaryHTML += `<div class="summary-row"><span>${description}</span><strong>₹${roomTotal.toLocaleString()}</strong></div>`;
+                summaryHTML += `<div class="summary-row"><span>${description}</span><strong>₹${roomTotal.toFixed(2)}</strong></div>`;
             });
-            
+
             bookingState.payment.totalAmount = total;
-            summaryHTML += `<div class="summary-row summary-total"><span>Total Amount:</span><span>₹${total.toLocaleString()}</span></div>`;
+            bookingState.payment.amountToPay = total; // For testing, assume full payment for UPI/Online, 0 for Cash advance
+
+            summaryHTML += `
+                <div class="summary-total flex justify-between"><span>Total Payable:</span> <strong>₹${total.toFixed(2)}</strong></div>
+            `;
             document.getElementById('booking-summary').innerHTML = summaryHTML;
+            updatePaymentDetails();
         }
-        
+
+        function updatePaymentDetails() {
+            const paymentDetailsDiv = document.getElementById('payment-details');
+            if (bookingState.payment.method) {
+                let detailsHTML = `
+                    <div class="summary-row"><span>Selected Method:</span> <strong>${bookingState.payment.method === 'UPI' ? 'UPI / Online Payment' : 'Pay at Arrival (Cash)'}</strong></div>
+                    <div class="summary-row"><span>Total Booking Amount:</span> <strong>₹${bookingState.payment.totalAmount.toFixed(2)}</strong></div>
+                `;
+
+                if (bookingState.payment.method === 'CASH') {
+                    const advance = (bookingState.payment.totalAmount * 0.30).toFixed(2);
+                    bookingState.payment.amountToPay = parseFloat(advance);
+                    detailsHTML += `<div class="summary-row"><span>Advance to Pay Now:</span> <strong>₹${advance}</strong></div>`;
+                    detailsHTML += `<div class="summary-row"><span>Remaining at Arrival:</span> <strong>₹${(bookingState.payment.totalAmount - parseFloat(advance)).toFixed(2)}</strong></div>`;
+                    document.getElementById('confirm-booking-btn-text').textContent = 'Confirm Booking (Pay Advance)';
+                } else {
+                    bookingState.payment.amountToPay = bookingState.payment.totalAmount;
+                    detailsHTML += `<div class="summary-row"><span>Amount to Pay Now:</span> <strong>₹${bookingState.payment.totalAmount.toFixed(2)}</strong></div>`;
+                    document.getElementById('confirm-booking-btn-text').textContent = 'Proceed to Pay';
+                }
+                paymentDetailsDiv.innerHTML = detailsHTML;
+                paymentDetailsDiv.classList.remove('hidden');
+                document.getElementById('confirm-booking-btn').classList.remove('hidden');
+            } else {
+                paymentDetailsDiv.classList.add('hidden');
+                document.getElementById('confirm-booking-btn').classList.add('hidden');
+            }
+        }
+
         function selectPaymentMethod(method) {
             bookingState.payment.method = method;
-            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
-            document.getElementById(`pay-${method.toLowerCase()}-option`).classList.add('selected');
-
-            let amountToPay = 0;
-            let detailsHTML = '';
-
-            if (method === 'UPI') {
-                amountToPay = bookingState.payment.totalAmount;
-                detailsHTML = `<p class="text-center">You will pay the full amount of <strong>₹${amountToPay.toLocaleString()}</strong> online.</p>`;
-            } else { // CASH (Pay at Arrival)
-                amountToPay = Math.round(bookingState.payment.totalAmount * 0.30);
-                detailsHTML = `
-                    <p class="text-center">To confirm, pay a 30% advance of <strong>₹${amountToPay.toLocaleString()}</strong> now.</p>
-                    <p class="text-center text-sm text-gray-500 mt-2">Remaining balance of ₹${(bookingState.payment.totalAmount - amountToPay).toLocaleString()} is due at arrival.</p>
-                `;
-            }
-            
-            bookingState.payment.amountToPay = amountToPay;
-            const paymentDetails = document.getElementById('payment-details');
-            paymentDetails.innerHTML = detailsHTML;
-            paymentDetails.classList.remove('hidden');
-            document.getElementById('confirm-booking-btn').classList.remove('hidden');
+            document.getElementById('pay-upi-option').classList.toggle('selected', method === 'UPI');
+            document.getElementById('pay-cash-option').classList.toggle('selected', method === 'CASH');
+            updatePaymentDetails();
         }
+
 
         // --- UTILITY FUNCTIONS ---
-        function showSuccessScreen(bookingId) {
-            document.getElementById('payment-selection').classList.add('hidden');
-            document.getElementById('loading-container').classList.add('hidden');
-            document.getElementById('booking-id').textContent = bookingId;
-            document.getElementById('success-container').classList.remove('hidden');
-        }
-        function formatDate(date) { return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
-        function showAlert(message, type = 'error') {
+        function showAlert(message, type) {
             const alertBox = document.getElementById('alert-box');
             alertBox.textContent = message;
-            alertBox.className = 'alert-box';
-            alertBox.classList.add(type);
+            alertBox.className = ''; // Clear previous classes
+            alertBox.classList.add('fade-in'); // Add a class for animation if needed
+            alertBox.classList.add('p-3', 'rounded-md', 'text-white', 'text-center');
+
+            if (type === 'error') {
+                alertBox.classList.add('bg-red-500');
+            } else if (type === 'success') {
+                alertBox.classList.add('bg-green-500');
+            }
             alertBox.style.display = 'block';
-            setTimeout(() => { alertBox.style.display = 'none'; }, 5000);
+            setTimeout(() => {
+                alertBox.classList.remove('fade-in'); // Remove class to allow re-animation
+                alertBox.style.display = 'none';
+            }, 5000); // Hide after 5 seconds
+        }
+
+        function showSuccessScreen(bookingId) {
+            document.getElementById('loading-container').classList.add('hidden');
+            document.getElementById('success-container').classList.remove('hidden');
+            document.getElementById('booking-id').textContent = bookingId;
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         }
     </script>
 </body>
